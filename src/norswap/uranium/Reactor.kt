@@ -69,7 +69,7 @@ class Reactor
     /**
      * List of root nodes over which this reactor operates.
      */
-    private val roots = ArrayList<Node>()
+    val roots = ArrayList<Node>()
 
     // ---------------------------------------------------------------------------------------------
 
@@ -91,20 +91,6 @@ class Reactor
     fun remove_visitor (visitor: NodeVisitor<*>)
     {
         visitor.domain.forEach { visitors.remove(it, visitor) }
-    }
-
-    // ---------------------------------------------------------------------------------------------
-
-    fun add_root (node: Node)
-    {
-        roots.add(node)
-    }
-
-    // ---------------------------------------------------------------------------------------------
-
-    fun remove_root (node: Node)
-    {
-        roots.remove(node)
     }
 
     // ---------------------------------------------------------------------------------------------
