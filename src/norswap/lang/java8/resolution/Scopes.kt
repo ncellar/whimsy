@@ -3,153 +3,170 @@ import norswap.lang.java8.typing.ClassLike
 import norswap.lang.java8.typing.RefType
 import norswap.lang.java8.typing.TypeParameter
 import norswap.utils.multimap.*
-import norswap.utils.proclaim
-import java.util.ArrayDeque
-import java.util.Collections
 
 // -------------------------------------------------------------------------------------------------
 
 interface Scope
 {
-    // TODO delegate rather than object, because there can be multiple parents
-    val parent: Scope?
-        get() = null
+    // ---------------------------------------------------------------------------------------------
 
-    val fields  : MutableMap<String, FieldInfo>
+    fun field (name: String): Lookup<FieldInfo>
+        = Missing
 
     // also has <init>, <clinit>
-    val methods : MutableMultiMap<String, MethodInfo>
+    fun method (name: String): Lookup<List<MethodInfo>>
+        = Missing
 
-    val class_likes: MutableMap<String, ClassLike>
+    fun class_like (name: String): Lookup<ClassLike>
+        = Missing
 
-    val type_params: MutableMap<String, TypeParameter>
+    fun type_param (name: String): Lookup<TypeParameter>
+        = Missing
 
-    fun type (name: String): RefType?
-        = type_params[name] ?: class_likes[name]
+    // ---------------------------------------------------------------------------------------------
 
-    fun full_name (name: String): String
-        = name
+    fun member (name: String): Lookup<Collection<MemberInfo>>
+        = +field(name) + method(name) + +class_like(name)
+
+    fun type (name: String): Lookup<RefType>
+        = type_param(name).let { if (it !is Missing) it else class_like(name) }
+
+    // ---------------------------------------------------------------------------------------------
+
+    fun fields(): LookupList<FieldInfo>
+        = Found(emptyList())
+
+    fun methods(): LookupList<MethodInfo>
+        = Found(emptyList())
+
+    fun class_likes(): LookupList<ClassLike>
+        = Found(emptyList())
+
+    fun type_params(): LookupList<TypeParameter>
+        = Found(emptyList())
+
+    // ---------------------------------------------------------------------------------------------
+
+    fun members(): LookupList<MemberInfo>
+        = fields() + methods() + class_likes()
+
+    fun types(): LookupList<RefType>
+        = type_params() + class_likes()
+
+    // ---------------------------------------------------------------------------------------------
+
+    fun put_field (name: String, value: FieldInfo): Unit
+        = throw NotImplementedError()
+
+    fun put_method (name: String, value: MethodInfo): Unit
+        = throw NotImplementedError()
+
+    fun put_class_like (name: String, value: ClassLike): Unit
+        = throw NotImplementedError()
+
+    fun put_param (name: String, value: TypeParameter): Unit
+        = throw NotImplementedError()
+
+    // ---------------------------------------------------------------------------------------------
+
+    fun put_member (name: String, value: MemberInfo)
+    {
+        when (value) {
+            is FieldInfo    -> put_field      (name, value)
+            is MethodInfo   -> put_method     (name, value)
+            is ClassLike    -> put_class_like (name, value)
+        }
+    }
+
+    // ---------------------------------------------------------------------------------------------
+
+    fun full_name (klass: String): String
+        = klass
 }
 
 // -------------------------------------------------------------------------------------------------
 
 abstract class ScopeBase: Scope
 {
-    override val fields      = HashMap<String, FieldInfo>()
-    override val methods     = HashMultiMap<String, MethodInfo>()
-    override val class_likes = HashMap<String, ClassLike>()
-    override val type_params = HashMap<String, TypeParameter>()
+    // ---------------------------------------------------------------------------------------------
 
-    override fun full_name (name: String): String
-        = parent ?. full_name(name) ?: throw Error("can't determine full name")
+    open val fields      : MutableMap<String, FieldInfo>       = HashMap()
+    open val methods     : MutableMultiMap<String, MethodInfo> = HashMultiMap()
+    open val class_likes : MutableMap<String, ClassLike>       = HashMap()
+    open val type_params : MutableMap<String, TypeParameter>   = HashMap()
+
+    // ---------------------------------------------------------------------------------------------
+
+    override fun field (name: String)
+        = lookup_wrap(fields[name])
+
+    override fun method (name: String)
+        = lookup_wrap(methods[name] as List<MethodInfo>?)
+
+    override fun class_like (name: String)
+        = lookup_wrap(class_likes[name])
+
+    override fun type_param (name: String)
+        = lookup_wrap(type_params[name])
+
+    // ---------------------------------------------------------------------------------------------
+
+    override fun type (name: String)
+        = lookup_wrap(type_params[name] ?: class_likes[name])
+
+    // ---------------------------------------------------------------------------------------------
+
+    override fun fields()
+        = Found(fields.values.toList())
+
+    override fun methods()
+        = Found(methods.values.flatten())
+
+    override fun class_likes()
+        = Found(class_likes.values.toList())
+
+    override fun type_params()
+        = Found(type_params.values.toList())
+
+    // ---------------------------------------------------------------------------------------------
+
+    override fun put_field (name: String, value: FieldInfo) {
+        fields[name] = value
+    }
+
+    override fun put_method (name: String, value: MethodInfo) {
+        methods.append(name, value)
+    }
+
+    override fun put_class_like (name: String, value: ClassLike) {
+        class_likes[name] = value
+    }
+
+    override fun put_param(name: String, value: TypeParameter) {
+        type_params[name] = value
+    }
+
+    // ---------------------------------------------------------------------------------------------
 }
 
 // -------------------------------------------------------------------------------------------------
 
 object EmptyScope: Scope
+
+// -------------------------------------------------------------------------------------------------
+
+class PackageScope (val name: String): Scope
 {
-    override val fields      : MutableMap<String, FieldInfo>        = Collections.emptyMap()
-    override val methods     : MutableMultiMap<String, MethodInfo>  = Collections.emptyMap()
-    override val class_likes : MutableMap<String, ClassLike>        = Collections.emptyMap()
-    override val type_params : MutableMap<String, TypeParameter>    = Collections.emptyMap()
+    override fun class_like (name: String): Lookup<ClassLike>
+        = Resolver.klass(full_name(name))
+
+    override fun full_name (klass: String): String
+        = if (name == "") klass else "$name.$klass"
 }
 
 // -------------------------------------------------------------------------------------------------
 
-class PackageScope (val name: String): ScopeBase()
-{
-    override fun full_name (name: String): String
-        = if (this.name == "") name else "${this.name}.$name"
-}
-
-// -------------------------------------------------------------------------------------------------
-
-class ScopeBuilder
-{
-    var current: Scope = PackageScope("")
-        private set
-
-    private val scope_stack = ArrayDeque<Scope>()
-
-    fun push (scope: Scope)
-    {
-        scope_stack.push(current)
-        current = scope
-    }
-
-    fun pop(): Scope
-    {
-        val out = current
-        current = scope_stack.pop()
-        return out
-    }
-
-    fun field (name: String): FieldInfo?
-        = current.fields[name]
-
-    fun method (name: String): List<Any>?
-        = current.methods[name]
-
-    fun class_like (name: String): ClassLike?
-        = current.class_likes[name]
-
-    fun type_param (name: String): TypeParameter?
-        = current.type_params[name]
-
-    fun type (name: String): RefType?
-        = current.type(name)
-
-    fun put_member (name: String, value: MemberInfo)
-    {
-        when (value) {
-            is FieldInfo    -> put_field  (name, value)
-            is MethodInfo   -> put_method (name, value)
-            is ClassLike    -> put_class_like(name, value)
-        }
-    }
-
-    fun put_field (name: String, value: FieldInfo) {
-        current.fields[name] = value
-    }
-
-    fun put_method (name: String, value: MethodInfo) {
-        current.methods.append(name, value)
-    }
-
-    fun put_class_like (name: String, value: ClassLike) {
-        current.class_likes[name] = value
-    }
-
-    fun put_param (name: String, value: TypeParameter) {
-        current.type_params[name] = value
-    }
-
-    fun full_name (name: String): String
-        = current.full_name(name)
-
-    fun type_chain (chain: List<String>): ClassLike?
-    {
-        var klass: ClassLike? = class_like(chain[0])
-        var i = 1
-
-        while (klass == null && i < chain.size) {
-            klass = Resolver.resolve_fully_qualified_class(chain.subList(0, i))
-            ++i
-        }
-
-        if (i == chain.size) return null
-
-        // TODO: DELEGATION COMES INTO IT
-
-        for (j in i..chain.lastIndex) {
-            proclaim(klass as ClassLike)
-            klass = klass.class_likes[chain[j]]
-            if (klass == null) return null
-        }
-
-        return klass
-    }
-}
+class FileScope: Scope
 
 // -------------------------------------------------------------------------------------------------
 

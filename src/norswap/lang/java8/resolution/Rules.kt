@@ -43,11 +43,12 @@ abstract class ResolutionRule <N: Node>: Rule<N>()
 
     fun Reaction<N>.resolve_members (full_name: String, member: String): List<MemberInfo>
     {
-        val klass = resolve_class(full_name) ?: return emptyList()
-        val members = klass.members(member)
-        if (members.isEmpty())
-            report(::MemberNotFoundResolutionError)
-        return members
+        TODO()
+//        val klass = resolve_class(full_name) ?: return emptyList()
+//        val members = klass.members(member)
+//        if (members.isEmpty())
+//            report(::MemberNotFoundResolutionError)
+//        return members
     }
 }
 
@@ -65,11 +66,12 @@ abstract class ScopeContributor<N: Node> (val scope: ScopeBuilder): AbstractNode
 
     fun resolve_members (full_name: String, member: String): List<MemberInfo>
     {
-        val klass = resolve_class(full_name) ?: return emptyList()
-        val members = klass.members(member)
-        if (members.isEmpty())
-            reactor.register_error(MemberNotFoundScopeError())
-        return members
+        TODO()
+//        val klass = resolve_class(full_name) ?: return emptyList()
+//        val members = klass.members(member)
+//        if (members.isEmpty())
+//            reactor.register_error(MemberNotFoundScopeError())
+//        return members
     }
 }
 
@@ -102,24 +104,25 @@ class ImportRule (scope: ScopeBuilder): ScopeContributor<Import>(scope)
 {
     override fun visit (node: Import, begin: Boolean)
     {
-        if (node.static)
-        {
-            val full_name = node.name.except().joinToString(".")
-            val members = resolve_members(full_name, node.name.last())
-            members.forEach { scope.put_member(it.name, it) }
-        }
-        else if (node.wildcard)
-        {
-            val full_name = node.name.joinToString(".")
-            val klass = Resolver.resolve_class(full_name)
-            klass?.members()?.forEach { scope.put_member(it.name, it) }
-        }
-        else
-        {
-            val full_name = node.name.joinToString(".")
-            val klass = resolve_class(full_name) ?: return
-            scope.put_class_like(node.name.last(), klass)
-        }
+        TODO()
+//        if (node.static)
+//        {
+//            val full_name = node.name.except().joinToString(".")
+//            val members = resolve_members(full_name, node.name.last())
+//            members.forEach { scope.put_member(it.name, it) }
+//        }
+//        else if (node.wildcard)
+//        {
+//            val full_name = node.name.joinToString(".")
+//            val klass = Resolver.resolve_class(full_name)
+//            klass?.members()?.forEach { scope.put_member(it.name, it) }
+//        }
+//        else
+//        {
+//            val full_name = node.name.joinToString(".")
+//            val klass = resolve_class(full_name) ?: return
+//            scope.put_class_like(node.name.last(), klass)
+//        }
     }
 }
 
@@ -172,9 +175,10 @@ class TypeDeclRule (val scope: ScopeBuilder): ResolutionRule<TypeDecl>()
 
     override fun Reaction<TypeDecl>.compute()
     {
-        val info = SourceClassInfo(scope.full_name(node.name), node)
-        node["resolved"] = info
-        scope.put_class_like(node.name, info)
+        TODO()
+//        val info = SourceClassInfo(scope.full_name(node.name), node)
+//        node["resolved"] = info
+//        scope.put_class_like(node.name, info)
     }
 }
 

@@ -1,9 +1,14 @@
 package norswap.lang.java8.resolution
+import norswap.lang.java8.JavaVirtualNode
 import norswap.lang.java8.ast.TypeDecl
 import norswap.lang.java8.ast.TypeDeclKind
+import norswap.lang.java8.java_virtual_node
 import norswap.lang.java8.typing.ClassLike
 import norswap.lang.java8.typing.RefType
 import norswap.lang.java8.typing.TypeParameter
+import norswap.uranium.Attribute
+import norswap.uranium.Reaction
+import norswap.uranium.ReactorContext
 import norswap.utils.multimap.*
 import norswap.utils.attempt
 import norswap.utils.cast
@@ -75,7 +80,7 @@ class ReflectionFieldInfo (val field: JField): FieldInfo()
 
 // =================================================================================================
 
-open class ClassFileInfo (val bclass: JavaClass): ClassLike
+open class ClassFileInfo (val bclass: JavaClass): ClassLike, ScopeBase()
 {
     override val name
         = bclass.className.substringAfterLast(".")
@@ -93,7 +98,7 @@ open class ClassFileInfo (val bclass: JavaClass): ClassLike
     }
 
     override val super_type
-        by lazy { Resolver.resolve_class(bclass.superclassName)!! }
+        get() = Resolver.klass(bclass.superclassName)
 
     override val fields      by lazy { compute_fields() }
     override val methods     by lazy { compute_methods() }
@@ -143,7 +148,7 @@ open class ClassFileInfo (val bclass: JavaClass): ClassLike
 
 // -------------------------------------------------------------------------------------------------
 
-open class ReflectionClassInfo (val klass: Class<*>): ClassLike
+open class ReflectionClassInfo (val klass: Class<*>): ClassLike, ScopeBase()
 {
     override val name = klass.simpleName!!
 
@@ -158,7 +163,7 @@ open class ReflectionClassInfo (val klass: Class<*>): ClassLike
     }
 
     override val super_type
-        = klass.superclass ?. let { ReflectionClassInfo(it) }
+        = klass.superclass ?. let { Found(ReflectionClassInfo(it)) } ?: Missing
 
     override val fields      by lazy { compute_fields()  }
     override val methods     by lazy { compute_methods() }
@@ -182,14 +187,14 @@ open class ReflectionClassInfo (val klass: Class<*>): ClassLike
 
 // -------------------------------------------------------------------------------------------------
 
-class SourceClassInfo (override val full_name: String, val decl: TypeDecl): ClassLike
+class SourceClassInfo (override val full_name: String, val decl: TypeDecl): ClassLike, ScopeBase()
 {
     override val name = decl.name
 
     override val kind: TypeDeclKind
         get() = decl.kind
 
-    override val super_type: ClassLike
+    override val super_type: Lookup<RefType>
         get() = decl["super_type"].cast()
 
     override val fields: MutableMap<String, FieldInfo>
@@ -246,34 +251,45 @@ class SourceTypeParameter: TypeParameter
 
 object Resolver
 {
-    private val class_cache = HashMap<String, ClassLike?>()
+    private val class_cache = HashMap<String, Lookup<ClassLike>>()
     private val syscl = ClassLoader.getSystemClassLoader() as URLClassLoader
 
     val urls = syscl.urLs
-
     val loader = PathClassLoader(urls)
 
-    fun resolve_class (full_name: String): ClassLike?
-        = class_cache.getOrPut(full_name) { seek_class(full_name) }
-
-    fun resolve_fully_qualified_class (chain: List<String>): ClassLike?
+    fun klass (full_name: String): Lookup<ClassLike>
     {
-        top@ for (i in chain.indices) {
-            val prefix = chain.subList(0, chain.size - i).joinToString(".")
-            var klass = resolve_class(prefix) ?: continue
-            for (j in 1..i) {
-                val name = chain[chain.size - i - 1 + j]
-                klass = resolve_nested_class(klass, name) ?: continue@top
+        val cached = class_cache[full_name]
+        if (cached != null) return cached // Found or Continue
+
+        val reactor   = ReactorContext.reactor
+        val java_node = reactor.java_virtual_node
+        val resolved  = Attribute(java_node, full_name)
+        val cont      = Continue(resolved)
+
+        class_cache[full_name] = cont
+
+        reactor.enqueue(Reaction(java_node) {
+            _provided = listOf(resolved)
+            _trigger  = {
+                val klass = seek_class(full_name)
+                if (klass != null) resolved += Found(klass)
             }
-            return klass
-        }
-        return null
+        })
+
+        // TODO handle source sources
+
+        return cont
     }
 
-    fun resolve_nested_class (klass: ClassLike, name: String): ClassLike?
+    fun load (full_name: String): ClassLike
     {
-        val nested = klass.class_likes[name] ?: return null
-        return resolve_class(klass.full_name + "$" + nested.name)
+        val klass = class_cache[full_name]
+        if (klass is Found) return klass.value
+        if (klass != null)  return klass.value // throws an exception
+
+        val loaded = seek_class(full_name) ?: throw Error("could not load class: $full_name")
+        return loaded
     }
 
     private fun seek_class (full_name: String): ClassLike?
@@ -293,6 +309,27 @@ object Resolver
 
         return null
     }
+
+    fun resolve_fully_qualified_class (chain: List<String>): ClassLike?
+    {
+        top@ for (i in chain.indices) {
+            val prefix = chain.subList(0, chain.size - i).joinToString(".")
+            var klass = resolve_class(prefix) ?: continue
+            for (j in 1..i) {
+                val name = chain[chain.size - i - 1 + j]
+                klass = resolve_nested_class(klass, name) ?: continue@top
+            }
+            return klass
+        }
+        return null
+    }
+
+    fun resolve_nested_class (klass: ClassLike, name: String): ClassLike?
+    {
+        TODO()
+//        val nested = klass.class_likes[name] ?: return null
+//        return resolve_class(klass.full_name + "$" + nested.name)
+    }
 }
 
 // =================================================================================================
@@ -301,9 +338,6 @@ class PathClassLoader (urls: Array<URL>): URLClassLoader(urls)
 {
     fun find_class_path (full_name: String): URL?
         = findResource(full_name.replace('.', '/') + ".class")
-
-    // Lesson learned from playing with JAR files: many JAR files do not have entries
-    // for their directories, only for their files.
 }
 
 // =================================================================================================

@@ -1,14 +1,14 @@
 package norswap.lang.java8.typing
 import norswap.lang.java8.ast.TypeDeclKind
+import norswap.lang.java8.resolution.Continue
 import norswap.lang.java8.resolution.EmptyScope
-import norswap.lang.java8.resolution.FieldInfo
+import norswap.lang.java8.resolution.Found
+import norswap.lang.java8.resolution.Lookup
+import norswap.lang.java8.resolution.LookupList
 import norswap.lang.java8.resolution.MemberInfo
-import norswap.lang.java8.resolution.MethodInfo
 import norswap.lang.java8.resolution.Resolver
 import norswap.lang.java8.resolution.Scope
-import norswap.utils.multimap.*
-import norswap.utils.cast
-import norswap.utils.maybe_list
+import norswap.lang.java8.resolution.plus
 
 // -------------------------------------------------------------------------------------------------
 
@@ -42,23 +42,29 @@ object TDouble : FloatingType("double")
 
 interface RefType: TType
 {
-    val super_interfaces: List<RefType>
-        get() = emptyList()
+    val super_interfaces: LookupList<RefType>
+        get() = Found(emptyList<RefType>())
 
-    val super_types: List<RefType>
+    val super_types: LookupList<RefType>
         get() = super_interfaces
 
-    val ancestors: List<RefType>
+    val ancestors: LookupList<RefType>
         get() {
-            val list = ArrayList(super_types)
+            val supa = super_interfaces
+            if (supa is Continue) return supa
+
+            val list = ArrayList(supa.value)
             var next = 0
             while (next != list.size) {
                 val end = list.size
-                for (i in next..(end-1))
-                    list.addAll(list[i].super_types)
+                for (i in next..(end-1)) {
+                    val supah = list[i].super_types
+                    if (supah is Continue) return supah
+                    list.addAll(supah.value)
+                }
                 next = end
             }
-            return list.distinct()
+            return Found(list.distinct())
         }
 
     val erasure: RefType
@@ -69,11 +75,11 @@ interface RefType: TType
 
 interface InstantiableType: RefType
 {
-    val super_type: RefType?
-        get() = TObject
+    val super_type: Lookup<RefType>
+        get() = Found(TObject)
 
-    override val super_types: List<RefType>
-        get() = super_interfaces + maybe_list(super_type)
+    override val super_types: LookupList<RefType>
+        get() = super_interfaces + +super_type
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -122,8 +128,8 @@ interface ArrayType: InstantiableType
 {
     val component: TType
 
-    override val super_interfaces: List<RefType>
-        get() = listOf(TSerializable, TCloneable)
+    override val super_interfaces: LookupList<RefType>
+        get() = Found(listOf(TSerializable, TCloneable))
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -138,48 +144,20 @@ object TNull: RefType
 interface ClassLike: InstantiableType, Scope, MemberInfo
 {
     val full_name: String
-
     val kind: TypeDeclKind
-
-    fun members (name: String): List<MemberInfo>
-        = ( maybe_list(fields[name])
-        +   maybe_list(methods[name])
-        +   maybe_list(class_likes[name]))
-        .cast()
-
-    fun members(): List<MemberInfo>
-        = (fields.values + methods.values.flatten() + class_likes.values).cast()
 }
 
 // -------------------------------------------------------------------------------------------------
 
-val TObject         : ClassLike = Resolver.resolve_class("java.lang.Object")!!
-val TString         : ClassLike = Resolver.resolve_class("java.lang.String")!!
-val TSerializable   : ClassLike = Resolver.resolve_class("java.io.Serializable")!!
-val TCloneable      : ClassLike = Resolver.resolve_class("java.lang.Cloneable")!!
+val TObject         : ClassLike = Resolver.load("java.lang.Object")
+val TString         : ClassLike = Resolver.load("java.lang.String")
+val TSerializable   : ClassLike = Resolver.load("java.io.Serializable")
+val TCloneable      : ClassLike = Resolver.load("java.lang.Cloneable")
 
 // -------------------------------------------------------------------------------------------------
 
-abstract class BoxedType (full_name: String): ClassLike
-{
-    val loaded =  Resolver.resolve_class(full_name)!!
-
-    // Delegation doesn't work because of a compiler bug.
-    override val name: String
-        get() = loaded.name
-    override val full_name: String
-        get() = loaded.full_name
-    override val kind: TypeDeclKind
-        get() = loaded.kind
-    override val fields: MutableMap<String, FieldInfo>
-        get() = loaded.fields
-    override val methods: MutableMultiMap<String, MethodInfo>
-        get() = loaded.methods
-    override val class_likes: MutableMap<String, ClassLike>
-        get() = loaded.class_likes
-    override val type_params: MutableMap<String, TypeParameter>
-        get() = loaded.type_params
-}
+abstract class BoxedType (full_name: String, val loaded: ClassLike =  Resolver.load(full_name))
+    : ClassLike by loaded
 
 // -------------------------------------------------------------------------------------------------
 

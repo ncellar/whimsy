@@ -7,6 +7,8 @@ import norswap.uranium.Reactor
 
 fun Reactor.install_java8_rules()
 {
+    val java_virtal_node = JavaVirtualNode()
+    roots.add(java_virtal_node)
     install_java8_typing_rules()
     install_java8_resolution_rules()
 }
