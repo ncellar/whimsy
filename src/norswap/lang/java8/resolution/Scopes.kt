@@ -1,56 +1,60 @@
 package norswap.lang.java8.resolution
 import norswap.lang.java8.typing.ClassLike
+import norswap.lang.java8.typing.FieldInfo
+import norswap.lang.java8.typing.MemberInfo
+import norswap.lang.java8.typing.MethodInfo
 import norswap.lang.java8.typing.RefType
 import norswap.lang.java8.typing.TypeParameter
+import norswap.utils.maybe_list
 import norswap.utils.multimap.*
 
-// -------------------------------------------------------------------------------------------------
+// =================================================================================================
 
 interface Scope
 {
     // ---------------------------------------------------------------------------------------------
 
-    fun field (name: String): Lookup<FieldInfo>
-        = Missing
+    fun field (name: String): FieldInfo?
+        = null
 
     // also has <init>, <clinit>
-    fun method (name: String): Lookup<List<MethodInfo>>
-        = Missing
+    fun method (name: String): Collection<MethodInfo>
+        = emptyList()
 
-    fun class_like (name: String): Lookup<ClassLike>
-        = Missing
+    fun class_like (name: String): ClassLike?
+        = null
 
-    fun type_param (name: String): Lookup<TypeParameter>
-        = Missing
-
-    // ---------------------------------------------------------------------------------------------
-
-    fun member (name: String): Lookup<Collection<MemberInfo>>
-        = +field(name) + method(name) + +class_like(name)
-
-    fun type (name: String): Lookup<RefType>
-        = type_param(name).let { if (it !is Missing) it else class_like(name) }
+    fun type_param (name: String): TypeParameter?
+        = null
 
     // ---------------------------------------------------------------------------------------------
 
-    fun fields(): LookupList<FieldInfo>
-        = Found(emptyList())
+    fun member (name: String): Collection<MemberInfo>
+        = maybe_list(field(name)) + method(name) + maybe_list(class_like(name))
 
-    fun methods(): LookupList<MethodInfo>
-        = Found(emptyList())
-
-    fun class_likes(): LookupList<ClassLike>
-        = Found(emptyList())
-
-    fun type_params(): LookupList<TypeParameter>
-        = Found(emptyList())
+    fun type (name: String): RefType?
+        = type_param(name) ?: class_like(name)
 
     // ---------------------------------------------------------------------------------------------
 
-    fun members(): LookupList<MemberInfo>
+    fun fields(): Collection<FieldInfo>
+        = emptyList()
+
+    fun methods(): Collection<MethodInfo>
+        = emptyList()
+
+    fun class_likes(): Collection<ClassLike>
+        = emptyList()
+
+    fun type_params(): Collection<TypeParameter>
+        = emptyList()
+
+    // ---------------------------------------------------------------------------------------------
+
+    fun members(): Collection<MemberInfo>
         = fields() + methods() + class_likes()
 
-    fun types(): LookupList<RefType>
+    fun types(): Collection<RefType>
         = type_params() + class_likes()
 
     // ---------------------------------------------------------------------------------------------
@@ -84,7 +88,7 @@ interface Scope
         = klass
 }
 
-// -------------------------------------------------------------------------------------------------
+// =================================================================================================
 
 abstract class ScopeBase: Scope
 {
@@ -98,35 +102,35 @@ abstract class ScopeBase: Scope
     // ---------------------------------------------------------------------------------------------
 
     override fun field (name: String)
-        = lookup_wrap(fields[name])
+        = fields[name]
 
-    override fun method (name: String)
-        = lookup_wrap(methods[name] as List<MethodInfo>?)
+    override fun method (name: String): Collection<MethodInfo>
+        = methods[name] ?: emptyList<MethodInfo>()
 
     override fun class_like (name: String)
-        = lookup_wrap(class_likes[name])
+        = class_likes[name]
 
     override fun type_param (name: String)
-        = lookup_wrap(type_params[name])
+        = type_params[name]
 
     // ---------------------------------------------------------------------------------------------
 
     override fun type (name: String)
-        = lookup_wrap(type_params[name] ?: class_likes[name])
+        = type_params[name] ?: class_likes[name]
 
     // ---------------------------------------------------------------------------------------------
 
-    override fun fields()
-        = Found(fields.values.toList())
+    override fun fields(): Collection<FieldInfo>
+        = fields.values
 
-    override fun methods()
-        = Found(methods.values.flatten())
+    override fun methods(): Collection<MethodInfo>
+        = methods.values.flatten()
 
-    override fun class_likes()
-        = Found(class_likes.values.toList())
+    override fun class_likes(): Collection<ClassLike>
+        = class_likes.values
 
-    override fun type_params()
-        = Found(type_params.values.toList())
+    override fun type_params(): Collection<TypeParameter>
+        = type_params.values
 
     // ---------------------------------------------------------------------------------------------
 
@@ -145,28 +149,25 @@ abstract class ScopeBase: Scope
     override fun put_param(name: String, value: TypeParameter) {
         type_params[name] = value
     }
-
-    // ---------------------------------------------------------------------------------------------
 }
 
-// -------------------------------------------------------------------------------------------------
+// =================================================================================================
 
 object EmptyScope: Scope
 
-// -------------------------------------------------------------------------------------------------
+// =================================================================================================
 
-class PackageScope (val name: String): Scope
+open class PackageScope (val name: String): Scope
 {
-    override fun class_like (name: String): Lookup<ClassLike>
+    object Empty: PackageScope("") {
+        override fun full_name (klass: String) = klass
+    }
+
+    override fun class_like (name: String)
         = Resolver.klass(full_name(name))
 
-    override fun full_name (klass: String): String
+    override fun full_name (klass: String)
         = if (name == "") klass else "$name.$klass"
 }
 
-// -------------------------------------------------------------------------------------------------
-
-class FileScope: Scope
-
-// -------------------------------------------------------------------------------------------------
-
+// =================================================================================================

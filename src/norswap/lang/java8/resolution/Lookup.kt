@@ -36,11 +36,11 @@ data class Found<T> (override val value: T): Lookup<T>()
  * An ongoing item lookup, indicating that the attributes in [required]
  * are needed in order to complete the lookup.
  */
-data class Continue (val required: List<Attribute>): Lookup<Nothing>()
+data class ContinueOld (val required: List<Attribute>): Lookup<Nothing>()
 {
     constructor (vararg required: Attribute): this(required.asList())
 
-    override fun unaryPlus(): Continue = this
+    override fun unaryPlus(): ContinueOld = this
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -68,7 +68,7 @@ fun <T> lookup_wrap (thing: T?): Lookup<T>
 // -------------------------------------------------------------------------------------------------
 
 /**
- * Concatenates two [LookupList]. If any of the two lists is a [Continue], the result
+ * Concatenates two [LookupList]. If any of the two lists is a [ContinueOld], the result
  * is a continue with all required attributes from both lists. If both lists are [Missing], the
  * result is [Missing]. Otherwise returns a [Found] with all found items.
  */
@@ -79,19 +79,19 @@ operator fun <T> LookupList<T>.plus (other: LookupList<T>)
             when (other) {
                 is Missing  -> Missing
                 is Found    -> other
-                is Continue -> other
+                is ContinueOld -> other
         }   }
         is Found -> {
             when (other) {
                 is Missing  -> this
                 is Found    -> Found(this.value + other.value)
-                is Continue -> other
+                is ContinueOld -> other
         }   }
-        is Continue -> {
+        is ContinueOld -> {
             when (other) {
                 is Missing  -> this
                 is Found    -> this
-                is Continue -> Continue(this.required + other.required)
+                is ContinueOld -> ContinueOld(this.required + other.required)
     }   }   }
 
 // -------------------------------------------------------------------------------------------------

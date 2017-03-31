@@ -33,46 +33,44 @@ abstract class ResolutionRule <N: Node>: Rule<N>()
     override fun provided (node: N)
         = list(Attribute(node, "resolved"))
 
-    fun Reaction<N>.resolve_class (full_name: String): ClassLike?
-    {
-        val klass = Resolver.resolve_class(full_name)
-        if (klass == null)
-            report(::ClassNotFoundResolutionError)
-        return klass
-    }
-
-    fun Reaction<N>.resolve_members (full_name: String, member: String): List<MemberInfo>
-    {
-        TODO()
+//    fun Reaction<N>.resolve_class (full_name: String): ClassLike?
+//    {
+//        val klass = Resolver.resolve_class(full_name)
+//        if (klass == null)
+//            report(::ClassNotFoundResolutionError)
+//        return klass
+//    }
+//
+//    fun Reaction<N>.resolve_members (full_name: String, member: String): List<MemberInfo>
+//    {
 //        val klass = resolve_class(full_name) ?: return emptyList()
 //        val members = klass.members(member)
 //        if (members.isEmpty())
 //            report(::MemberNotFoundResolutionError)
 //        return members
-    }
+//    }
 }
 
 // -------------------------------------------------------------------------------------------------
 
 abstract class ScopeContributor<N: Node> (val scope: ScopeBuilder): AbstractNodeVisitor<N>()
 {
-    fun resolve_class (full_name: String): ClassLike?
-    {
-        val klass = Resolver.resolve_class(full_name)
-        if (klass == null)
-            reactor.register_error(ClassNotFoundScopeError())
-        return klass
-    }
-
-    fun resolve_members (full_name: String, member: String): List<MemberInfo>
-    {
-        TODO()
+//    fun resolve_class (full_name: String): ClassLike?
+//    {
+//        val klass = Resolver.resolve_class(full_name)
+//        if (klass == null)
+//            reactor.register_error(ClassNotFoundScopeError())
+//        return klass
+//    }
+//
+//    fun resolve_members (full_name: String, member: String): List<MemberInfo>
+//    {
 //        val klass = resolve_class(full_name) ?: return emptyList()
 //        val members = klass.members(member)
 //        if (members.isEmpty())
 //            reactor.register_error(MemberNotFoundScopeError())
 //        return members
-    }
+//    }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -104,7 +102,6 @@ class ImportRule (scope: ScopeBuilder): ScopeContributor<Import>(scope)
 {
     override fun visit (node: Import, begin: Boolean)
     {
-        TODO()
 //        if (node.static)
 //        {
 //            val full_name = node.name.except().joinToString(".")
@@ -127,8 +124,6 @@ class ImportRule (scope: ScopeBuilder): ScopeContributor<Import>(scope)
 }
 
 // -------------------------------------------------------------------------------------------------
-
-// TODO: most lookup rules will need a dependency on this
 
 class SuperclassRule (val scope: ScopeBuilder): Rule<TypeDecl>()
 {
@@ -193,12 +188,12 @@ class ClassTypeRule (val scope: ScopeBuilder): ResolutionRule<ClassType>()
 
     override fun Reaction<ClassType>.compute()
     {
-        val class_name = node.parts.map { it.name }.joinToString(".")
-        val resolved = Resolver.resolve_class(class_name)
-        if (resolved == null)
-            report(::ClassNotFoundResolutionError)
-        else
-            node["resolved"] = resolved
+//        val class_name = node.parts.map { it.name }.joinToString(".")
+//        val resolved = Resolver.resolve_class(class_name)
+//        if (resolved == null)
+//            report(::ClassNotFoundResolutionError)
+//        else
+//            node["resolved"] = resolved
     }
 }
 

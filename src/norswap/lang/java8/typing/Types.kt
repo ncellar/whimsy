@@ -1,14 +1,9 @@
 package norswap.lang.java8.typing
 import norswap.lang.java8.ast.TypeDeclKind
-import norswap.lang.java8.resolution.Continue
 import norswap.lang.java8.resolution.EmptyScope
-import norswap.lang.java8.resolution.Found
-import norswap.lang.java8.resolution.Lookup
-import norswap.lang.java8.resolution.LookupList
-import norswap.lang.java8.resolution.MemberInfo
 import norswap.lang.java8.resolution.Resolver
 import norswap.lang.java8.resolution.Scope
-import norswap.lang.java8.resolution.plus
+import norswap.utils.maybe_list
 
 // -------------------------------------------------------------------------------------------------
 
@@ -42,29 +37,22 @@ object TDouble : FloatingType("double")
 
 interface RefType: TType
 {
-    val super_interfaces: LookupList<RefType>
-        get() = Found(emptyList<RefType>())
+    val super_interfaces: List<RefType>
+        get() = emptyList<RefType>()
 
-    val super_types: LookupList<RefType>
+    val super_types: List<RefType>
         get() = super_interfaces
 
-    val ancestors: LookupList<RefType>
+    val ancestors: List<RefType>
         get() {
-            val supa = super_interfaces
-            if (supa is Continue) return supa
-
-            val list = ArrayList(supa.value)
+            val list = ArrayList(super_interfaces)
             var next = 0
             while (next != list.size) {
                 val end = list.size
-                for (i in next..(end-1)) {
-                    val supah = list[i].super_types
-                    if (supah is Continue) return supah
-                    list.addAll(supah.value)
-                }
+                for (i in next..(end-1)) list.addAll(list[i].super_types)
                 next = end
             }
-            return Found(list.distinct())
+            return list.distinct()
         }
 
     val erasure: RefType
@@ -75,11 +63,11 @@ interface RefType: TType
 
 interface InstantiableType: RefType
 {
-    val super_type: Lookup<RefType>
-        get() = Found(TObject)
+    val super_type: RefType?
+        get() = TObject
 
-    override val super_types: LookupList<RefType>
-        get() = super_interfaces + +super_type
+    override val super_types: List<RefType>
+        get() = super_interfaces + maybe_list(super_type)
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -128,8 +116,8 @@ interface ArrayType: InstantiableType
 {
     val component: TType
 
-    override val super_interfaces: LookupList<RefType>
-        get() = Found(listOf(TSerializable, TCloneable))
+    override val super_interfaces
+        get() = listOf(TSerializable, TCloneable)
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -170,5 +158,26 @@ object BInt    : BoxedType("java.lang.Integer")
 object BLong   : BoxedType("java.lang.Long")
 object BFloat  : BoxedType("java.lang.Float")
 object BDouble : BoxedType("java.lang.Double")
+
+// -------------------------------------------------------------------------------------------------
+
+interface MemberInfo
+{
+    val name: String
+}
+
+// -------------------------------------------------------------------------------------------------
+
+abstract class MethodInfo: MemberInfo
+{
+    override fun toString() = name
+}
+
+// -------------------------------------------------------------------------------------------------
+
+abstract class FieldInfo: MemberInfo
+{
+    override fun toString() = name
+}
 
 // -------------------------------------------------------------------------------------------------
