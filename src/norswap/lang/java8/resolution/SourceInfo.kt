@@ -22,7 +22,7 @@ class SourceTypeParameter: TypeParameter
 
 // -------------------------------------------------------------------------------------------------
 
-class SourceClassLike (override val full_name: String, val decl: TypeDecl): ClassLike, ScopeBase()
+class SourceClassLike (override val canonical_name: String, val decl: TypeDecl): ClassLike, ScopeBase()
 {
     override val name = decl.name
 
@@ -44,7 +44,7 @@ class SourceClassLike (override val full_name: String, val decl: TypeDecl): Clas
     override val type_params: MutableMap<String, TypeParameter>
         get() = decl["type_params"].cast()
 
-    override fun toString() = full_name
+    override fun toString() = canonical_name
 }
 
 // -------------------------------------------------------------------------------------------------

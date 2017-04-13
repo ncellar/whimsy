@@ -131,20 +131,20 @@ object TNull: RefType
 
 interface ClassLike: InstantiableType, Scope, MemberInfo
 {
-    val full_name: String
+    val canonical_name: String
     val kind: TypeDeclKind
 }
 
 // -------------------------------------------------------------------------------------------------
 
-val TObject         : ClassLike = Resolver.load("java.lang.Object")
-val TString         : ClassLike = Resolver.load("java.lang.String")
-val TSerializable   : ClassLike = Resolver.load("java.io.Serializable")
-val TCloneable      : ClassLike = Resolver.load("java.lang.Cloneable")
+val TObject         : ClassLike = Resolver.eagerly("java.lang.Object")
+val TString         : ClassLike = Resolver.eagerly("java.lang.String")
+val TSerializable   : ClassLike = Resolver.eagerly("java.io.Serializable")
+val TCloneable      : ClassLike = Resolver.eagerly("java.lang.Cloneable")
 
 // -------------------------------------------------------------------------------------------------
 
-abstract class BoxedType (full_name: String, val loaded: ClassLike =  Resolver.load(full_name))
+abstract class BoxedType (full_name: String, val loaded: ClassLike =  Resolver.eagerly(full_name))
     : ClassLike by loaded
 
 // -------------------------------------------------------------------------------------------------

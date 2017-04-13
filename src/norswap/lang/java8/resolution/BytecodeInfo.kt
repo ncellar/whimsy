@@ -49,7 +49,7 @@ open class BytecodeClassLike (val bclass: JavaClass): ClassLike, ScopeBase()
     override val name
         = bclass.className.substringAfterLast(".")
 
-    override val full_name
+    override val canonical_name
         = bclass.className!!
 
     override val kind = when
@@ -83,8 +83,9 @@ open class BytecodeClassLike (val bclass: JavaClass): ClassLike, ScopeBase()
             ?: return HashMap<String, ClassLike>()
 
         return attr.innerClasses.associateTo(HashMap()) {
+            // TODO anonymous class name handling
             val name = nested_class_name(it)
-            name to Resolver.resolve_nested_class(this, name)!!
+            name to Resolver.klass(this.canonical_name + "$" + name)
         }
     }
 
@@ -107,7 +108,7 @@ open class BytecodeClassLike (val bclass: JavaClass): ClassLike, ScopeBase()
         return (const as ConstantUtf8).bytes
     }
 
-    override fun toString() = full_name
+    override fun toString() = canonical_name
 }
 
 // -------------------------------------------------------------------------------------------------

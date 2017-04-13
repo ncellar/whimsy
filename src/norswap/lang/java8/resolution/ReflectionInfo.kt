@@ -32,7 +32,7 @@ open class ReflectionClassLike (val klass: Class<*>): ClassLike, ScopeBase()
 {
     override val name = klass.simpleName!!
 
-    override val full_name = klass.canonicalName!!
+    override val canonical_name = klass.canonicalName!!
 
     override val kind = when
     {
@@ -62,7 +62,7 @@ open class ReflectionClassLike (val klass: Class<*>): ClassLike, ScopeBase()
     private fun compute_type_params(): MutableMap<String, TypeParameter>
         = klass.typeParameters.associateTo(HashMap()) { it.name to ReflectionTypeParameter(it) }
 
-    override fun toString() = full_name
+    override fun toString() = canonical_name
 }
 
 // -------------------------------------------------------------------------------------------------

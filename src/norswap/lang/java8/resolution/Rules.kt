@@ -55,22 +55,7 @@ abstract class ResolutionRule <N: Node>: Rule<N>()
 
 abstract class ScopeContributor<N: Node> (val scope: ScopeBuilder): AbstractNodeVisitor<N>()
 {
-//    fun resolve_class (full_name: String): ClassLike?
-//    {
-//        val klass = Resolver.resolve_class(full_name)
-//        if (klass == null)
-//            reactor.register_error(ClassNotFoundScopeError())
-//        return klass
-//    }
-//
-//    fun resolve_members (full_name: String, member: String): List<MemberInfo>
-//    {
-//        val klass = resolve_class(full_name) ?: return emptyList()
-//        val members = klass.members(member)
-//        if (members.isEmpty())
-//            reactor.register_error(MemberNotFoundScopeError())
-//        return members
-//    }
+
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -104,7 +89,7 @@ class ImportRule (scope: ScopeBuilder): ScopeContributor<Import>(scope)
     {
 //        if (node.static)
 //        {
-//            val full_name = node.name.except().joinToString(".")
+//            val full_name = node.name.except(1).joinToString(".")
 //            val members = resolve_members(full_name, node.name.last())
 //            members.forEach { scope.put_member(it.name, it) }
 //        }

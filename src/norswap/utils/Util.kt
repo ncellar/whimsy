@@ -200,9 +200,9 @@ fun <T> List<T>.rest (n: Int = 1): List<T>
 // -------------------------------------------------------------------------------------------------
 
 /**
- * Returns a view of the list without its last [n] items (default: 1).
+ * Returns a view of the list without its last [n] items.
  */
-fun <T> List<T>.except (n: Int = 1): List<T>
+fun <T> List<T>.except (n: Int): List<T>
     = subList(0, size - n)
 
 // -------------------------------------------------------------------------------------------------
