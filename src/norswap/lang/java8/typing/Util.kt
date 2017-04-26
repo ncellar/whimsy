@@ -5,9 +5,9 @@ import norswap.utils.proclaim
 // -------------------------------------------------------------------------------------------------
 
 /**
- * Accessor for the "type" property.
+ * Accessor for the "type" attribute.
  */
-inline var Expr.ptype: TType
+inline var Expr.typea: TType
     get()      = this["type"] as TType
     set(value) { this["type"] = value }
 
@@ -139,24 +139,24 @@ fun primitive_rank (type: PrimitiveType): Int
 // -------------------------------------------------------------------------------------------------
 
 /**
- * True if a value of type [source] can be converted to type [target] via a widening
+ * True if a value of type [src] can be converted to type [dst] via a widening
  * or primitive conversion, or via identity conversion.
  */
-fun prim_widening_conversion (source: PrimitiveType, target: PrimitiveType): Boolean
+fun prim_widening_conversion (src: PrimitiveType, dst: PrimitiveType): Boolean
 {
-    val srank = primitive_rank(source)
-    val trank = primitive_rank(target)
-    return srank >= 0 && trank >= 0 && trank >= srank
+    val src_rank = primitive_rank(src)
+    val dst_rank = primitive_rank(dst)
+    return src_rank >= 0 && dst_rank >= 0 && dst_rank >= src_rank
 }
 
 // -------------------------------------------------------------------------------------------------
 
 /**
- * True if a value of type [source] can be converted to type [target] via a narrowing
+ * True if a value of type [src] can be converted to type [dst] via a narrowing
  * or primitive conversion, or via identity conversion.
  */
-fun prim_narrowing_conversion (source: PrimitiveType, target: PrimitiveType): Boolean
-    = prim_widening_conversion(target, source)
+fun prim_narrowing_conversion (src: PrimitiveType, dst: PrimitiveType): Boolean
+    = prim_widening_conversion(dst, src)
 
 // -------------------------------------------------------------------------------------------------
 
@@ -190,50 +190,50 @@ fun find_conflicting_parameterization (t1: RefType, t2: RefType): Pair<RefType, 
 // -------------------------------------------------------------------------------------------------
 
 /**
- * True of [source] and [target] are cast-compatible: a cast between from a value with type
- * [source] to type [target] may potentially succeed.
+ * True of [src] and [dst] are cast-compatible: a between from a value with type
+ * [src] to type [dst] may potentially succeed.
  *
  * See http://docs.oracle.com/javase/specs/jls/se8/html/jls-5.html#jls-5.5
  */
-fun cast_compatible (source: TType, target: TType): Boolean
+fun cast_compatible (src: TType, dst: TType): Boolean
 {
-    if (source == target)
+    if (src == dst)
         return true
 
-    if (source is IntersectionType)
-        return source.members.all { cast_compatible(it, target) }
+    if (src is IntersectionType)
+        return src.members.all { cast_compatible(it, dst) }
 
-    if (target is IntersectionType)
-        return target.members.all { cast_compatible(source, it) }
+    if (dst is IntersectionType)
+        return dst.members.all { cast_compatible(src, it) }
 
-    if (source is TypeParameter)
-        return cast_compatible(source.upper_bound, target)
+    if (src is TypeParameter)
+        return cast_compatible(src.upper_bound, dst)
 
-    if (target is TypeParameter)
-        return cast_compatible(source, target.upper_bound)
+    if (dst is TypeParameter)
+        return cast_compatible(src, dst.upper_bound)
 
-    if (source is PrimitiveType) {
-        if (target is PrimitiveType)
-            return source is NumericType && target is NumericType
+    if (src is PrimitiveType) {
+        if (dst is PrimitiveType)
+            return src is NumericType && dst is NumericType
         else
-            return ref_widening_conversion(source.boxed, target as RefType)
+            return ref_widening_conversion(src.boxed, dst as RefType)
     }
 
-    proclaim(source as RefType)
+    proclaim(src as RefType)
 
-    if (target is PrimitiveType) {
-        if (source is BoxedType)
-            return prim_widening_conversion(source.unboxed, target)
+    if (dst is PrimitiveType) {
+        if (src is BoxedType)
+            return prim_widening_conversion(src.unboxed, dst)
         else
-            return ref_narrowing_conversion(source, target.boxed)
+            return ref_narrowing_conversion(src, dst.boxed)
     }
 
-    proclaim(target as RefType)
+    proclaim(dst as RefType)
 
-    if (source is ArrayType) {
-        if (target is ArrayType) {
-            val sc = source.component
-            val tc = target.component
+    if (src is ArrayType) {
+        if (dst is ArrayType) {
+            val sc = src.component
+            val tc = dst.component
             if (sc is RefType && tc is RefType)
                 return cast_compatible(sc, tc)
             else
@@ -241,18 +241,18 @@ fun cast_compatible (source: TType, target: TType): Boolean
         }
         else
             // target must be Object, Serializable or Cloneable
-            return source sub target
+            return src sub dst
     }
 
-    if (target is ArrayType)
+    if (dst is ArrayType)
         // source must be Object, Serializable or Cloneable
-        return target sub source
+        return dst sub src
 
-    val conflict = find_conflicting_parameterization(source, target)
+    val conflict = find_conflicting_parameterization(src, dst)
 
     return conflict != null
-        || ref_narrowing_conversion (source.erasure, target.erasure)
-        || ref_widening_conversion  (source.erasure, target.erasure)
+        || ref_narrowing_conversion (src.erasure, dst.erasure)
+        || ref_widening_conversion  (src.erasure, dst.erasure)
 }
 
 // -------------------------------------------------------------------------------------------------

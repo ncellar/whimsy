@@ -1,5 +1,7 @@
 package norswap.uranium
 
+import norswap.utils.multimap.append
+
 /**
  * A reaction is a procedure that consumes some attributes ([consumed]) in order to derive other
  * attributes ([provided]).
@@ -8,8 +10,6 @@ package norswap.uranium
  * this node. It may also be the node that caused the reactions' creation. The reaction keeps
  * a reference to this node that can be used in the implementation of [trigger], the method that
  * computes the provided attributes.
- *
- * The most common form of reaction is [RuleReaction] which is created by [Rule].
  */
 class Reaction <N: Node> internal constructor (node: N)
 {
@@ -17,9 +17,16 @@ class Reaction <N: Node> internal constructor (node: N)
 
     constructor (node: N, init: Reaction<N>.() -> Unit): this(node) {
         init()
+
         // Register the attributes consumed and provided by this reaction with [node].
-        consumed.forEach { (node, attr) -> node.add_consumer(attr, this) }
-        provided.forEach { (node, attr) -> node.add_supplier(attr, this) }
+        for ((node1, name) in provided) { node1.suppliers.append(name, this) }
+        for ((node1, name) in consumed) {
+            node1.consumers.append(name, this)
+            if (node.raw(name) != null) ++ deps_count
+        }
+
+        if (deps_count == consumed.size)
+            reactor.enqueue(this)
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -40,7 +47,7 @@ class Reaction <N: Node> internal constructor (node: N)
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * The rule will be triggered when these attributes are available.
+     * The reaction will be triggered when these attributes are available.
      */
     val consumed get() = _consumed
     var _consumed: List<Attribute> = emptyList()
@@ -48,7 +55,7 @@ class Reaction <N: Node> internal constructor (node: N)
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * Once the rule is triggered, these attributes will be made available.
+     * Once the reaction is triggered, these attributes will be made available.
      */
     val provided get() = _provided
     var _provided: List<Attribute> = emptyList()
@@ -59,7 +66,7 @@ class Reaction <N: Node> internal constructor (node: N)
      * Reactor to which this instance is associated.
      */
     val reactor get() = _reactor
-    var _reactor: Reactor = ReactorContext.reactor
+    var _reactor: Reactor = Context.reactor
 
     // ---------------------------------------------------------------------------------------------
 
@@ -82,7 +89,7 @@ class Reaction <N: Node> internal constructor (node: N)
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * Whether the rule has been triggered or not.
+     * Whether the reaction has been triggered or not.
      *
      * This is set to true by the reactor before running [trigger], so will be true even if
      * [trigger] throws an exception.
@@ -93,7 +100,7 @@ class Reaction <N: Node> internal constructor (node: N)
     // ---------------------------------------------------------------------------------------------
 
     @Suppress("UNUSED_PARAMETER")
-    internal fun satisfy (attr: Attribute)
+    internal fun satisfy (node: Node, attr: String)
     {
         if (++ deps_count == consumed.size)
             reactor.enqueue(this)

@@ -280,6 +280,7 @@ inline fun <T> Boolean.then (f: () -> T): T?
 // -------------------------------------------------------------------------------------------------
 
 /**
+<<<<<<< HEAD
  * If the receiver can be cast to [T], run [f] over it and return the result. Else return null.
  *
  * You typically have to specify the type of the parameter in the lambda, because Kotlin type

@@ -54,7 +54,7 @@ object LiteralRule: TypingRule<Literal>()
 
     override fun Reaction<Literal>.compute()
     {
-        node.ptype = when (node.value) {
+        node.typea = when (node.value) {
             is String   -> TString
             is Int      -> TInt
             is Long     -> TLong
@@ -75,12 +75,12 @@ object NotRule: UnaryTypingRule<Not>()
 
     override fun Reaction<Not>.compute()
     {
-        val op_type = node.operand.ptype.unboxed
+        val op_type = node.operand.typea.unboxed
 
         if (op_type === TBool)
-            node.ptype = TBool
+            node.typea = TBool
         else
-            report(::NotTypeError)
+            report(NotTypeError)
     }
 }
 
@@ -92,12 +92,12 @@ object ComplementRule: UnaryTypingRule<Complement>()
 
     override fun Reaction<Complement>.compute()
     {
-        val op_type = node.operand.ptype.unboxed
+        val op_type = node.operand.typea.unboxed
 
         if (op_type is IntegerType)
-            node.ptype = unary_promotion(op_type)
+            node.typea = unary_promotion(op_type)
         else
-            report(::ComplementTypeError)
+            report(ComplementTypeError)
     }
 }
 
@@ -111,12 +111,12 @@ object UnaryArithRule: UnaryTypingRule<UnaryOp>()
 
     override fun Reaction<UnaryOp>.compute()
     {
-        val op_type = node.operand.ptype.unboxed
+        val op_type = node.operand.typea.unboxed
 
         if (op_type is NumericType)
-            node.ptype = unary_promotion(op_type)
+            node.typea = unary_promotion(op_type)
         else
-            report(::UnaryArithTypeError)
+            report(UnaryArithTypeError)
     }
 }
 
@@ -133,16 +133,16 @@ object BinaryArithRule: BinaryOpRule()
 
     override fun Reaction<BinaryOp>.compute()
     {
-        val lt = node.left .ptype.unboxed
-        val rt = node.right.ptype.unboxed
+        val lt = node.left .typea.unboxed
+        val rt = node.right.typea.unboxed
 
         if (node is Sum && (lt === TString || rt === TString))
-            return run { node.ptype = TString }
+            return run { node.typea = TString }
 
         if (lt is NumericType && rt is NumericType)
-            node.ptype = binary_promotion(lt, rt)
+            node.typea = binary_promotion(lt, rt)
         else
-            report(::BinaryArithTypeError)
+            report(BinaryArithTypeError)
     }
 }
 
@@ -157,13 +157,13 @@ object ShiftRule: BinaryOpRule()
 
     override fun Reaction<BinaryOp>.compute()
     {
-        val lt = node.left .ptype.unboxed
-        val rt = node.right.ptype.unboxed
+        val lt = node.left .typea.unboxed
+        val rt = node.right.typea.unboxed
 
         if (lt is IntegerType && rt is IntegerType)
-            node.ptype = unary_promotion(lt)
+            node.typea = unary_promotion(lt)
         else
-            report(::ShiftTypeError)
+            report(ShiftTypeError)
     }
 }
 
@@ -179,13 +179,13 @@ object OrderingRule: BinaryOpRule()
 
     override fun Reaction<BinaryOp>.compute()
     {
-        val lt = node.left .ptype.unboxed
-        val rt = node.right.ptype.unboxed
+        val lt = node.left .typea.unboxed
+        val rt = node.right.typea.unboxed
 
         if (lt !is NumericType || rt !is NumericType)
-            report(::OrderingTypeError)
+            report(OrderingTypeError)
         else
-            node.ptype = TBool
+            node.typea = TBool
     }
 }
 
@@ -201,20 +201,20 @@ object InstanceofRule: TypingRule<Instanceof>()
 
     override fun Reaction<Instanceof>.compute()
     {
-        val op_type = node.op.ptype
+        val op_type = node.op.typea
         val type    = node.type.resolved
 
         if (op_type !is RefType)
-            return report(::InstanceofValueError)
+            return report(InstanceofValueError)
         if (type !is RefType)
-            return report(::InstanceofTypeError)
+            return report(InstanceofTypeError)
         if (!type.reifiable())
-            return report(::InstanceofReifiableError)
+            return report(InstanceofReifiableError)
 
         if (cast_compatible(op_type, type))
-            node["type"] = TBool
+            node.typea = TBool
         else
-            report(::InstanceofCompatError)
+            report(InstanceofCompatError)
     }
 }
 
@@ -228,27 +228,27 @@ object EqualRule: BinaryOpRule()
 
     override fun Reaction<BinaryOp>.compute()
     {
-        val lt = node.left .ptype
-        val rt = node.right.ptype
+        val lt = node.left .typea
+        val rt = node.right.typea
         val ltu = lt.unboxed
         val rtu = rt.unboxed
 
         if (ltu is NumericType && rtu is NumericType)
-            return run { node.ptype = TBool }
+            return run { node.typea = TBool }
 
         if (ltu === TBool && rtu === TBool)
-            return run { node.ptype = TBool }
+            return run { node.typea = TBool }
 
         if (ltu is PrimitiveType && rtu is PrimitiveType)
-            return report(::EqualNumBoolError)
+            return report(EqualNumBoolError)
 
         if (lt is PrimitiveType || rt is PrimitiveType)
-            return report(::EqualPrimRefError)
+            return report(EqualPrimRefError)
 
         if (cast_compatible(lt, rt))
-            node.ptype = TBool
+            node.typea = TBool
         else
-            report(::EqualCompatError)
+            report(EqualCompatError)
     }
 }
 
@@ -263,19 +263,19 @@ object BitwiseRule: BinaryOpRule()
 
     override fun Reaction<BinaryOp>.compute()
     {
-        val lt = node.left .ptype.unboxed
-        val rt = node.right.ptype.unboxed
+        val lt = node.left .typea.unboxed
+        val rt = node.right.typea.unboxed
 
         if (lt === TBool && rt === TBool)
-            return run { node.ptype = TBool }
+            return run { node.typea = TBool }
 
         if (lt === TBool || rt === TBool)
-            return report(::BitwiseMixedError)
+            return report(BitwiseMixedError)
 
         if (lt !is IntegerType || rt !is IntegerType)
-            return report(::BitwiseRefError)
+            return report(BitwiseRefError)
 
-        node.ptype = binary_promotion(lt, rt)
+        node.typea = binary_promotion(lt, rt)
     }
 }
 
@@ -289,13 +289,13 @@ object LogicalRule: BinaryOpRule()
 
     override fun Reaction<BinaryOp>.compute()
     {
-        val lt = node.left .ptype.unboxed
-        val rt = node.right.ptype.unboxed
+        val lt = node.left .typea.unboxed
+        val rt = node.right.typea.unboxed
 
         if (lt !== TBool || rt !== TBool)
-            report(::LogicalTypeError)
+            report(LogicalTypeError)
         else
-            node.ptype = TBool
+            node.typea = TBool
     }
 }
 

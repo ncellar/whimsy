@@ -1,6 +1,5 @@
 package norswap.uranium
 import norswap.utils.Visitable
-import norswap.utils.multimap.*
 import java.util.ArrayList
 import java.util.HashMap
 
@@ -20,11 +19,11 @@ interface Node: Visitable<Node>
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * Retrieve the value of the given attribute, or throws a [ReactorException] carrying an
+     * Retrieve the value of the given attribute, or throws a [Fail] carrying an
      * [AttributeNotDefined] if it doesn't exist.
      */
     operator fun get (name: String): Any
-         = attrs[name] ?: throw ReactorException(AttributeNotDefined(Attribute(this, name)))
+         = attrs[name] ?: throw Fail(AttributeNotDefined(Attribute(this, name)))
 
     // ---------------------------------------------------------------------------------------------
 
@@ -38,7 +37,7 @@ interface Node: Visitable<Node>
 
     /**
      * Sets the value of the given attribute. If the attribute is already defined, throws a
-     * [ReactorException] carrying an [AttributeRedefined].
+     * [Fail] carrying an [AttributeRedefined].
      *
      * This may cause consumers waiting for the attribute to be enqueued by the reactor
      * in order to be triggered.
@@ -47,26 +46,10 @@ interface Node: Visitable<Node>
     {
         val old = attrs.put(name, value)
         if (old != null)
-            throw ReactorException(AttributeRedefined(Attribute(this, name)))
+            throw Fail(AttributeRedefined(Attribute(this, name)))
 
         (consumers[name] ?: emptyList<Reaction<*>>())
-            .forEach { it.satisfy(Attribute(this, name)) }
-    }
-
-    // ---------------------------------------------------------------------------------------------
-
-    /** @suppress */
-    fun add_supplier (name: String, rule: Reaction<*>)
-    {
-        suppliers.append(name, rule)
-    }
-
-    // ---------------------------------------------------------------------------------------------
-
-    /** @suppress */
-    fun add_consumer (attr: String, rule: Reaction<*>)
-    {
-        consumers.append(attr, rule)
+            .forEach { it.satisfy(this, name) }
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -87,7 +70,7 @@ interface Node: Visitable<Node>
 /**
  * Default data implementation for [Node] fields.
  */
-abstract class CNode: Node
+open class CNode: Node
 {
     override val attrs     = HashMap<String, Any>()
     override val consumers = HashMap<String, ArrayList<Reaction<*>>>()

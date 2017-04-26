@@ -6,7 +6,7 @@ import norswap.lang.java8.ast.TypeDecl
 import norswap.lang.java8.ast.TypeDeclKind.*
 import norswap.lang.java8.typing.ClassLike
 import norswap.lang.java8.typing.TObject
-import norswap.uranium.AbstractNodeVisitor
+import norswap.uranium.NodeVisitor
 import norswap.utils.except
 import norswap.uranium.Attribute
 import norswap.uranium.Node
@@ -53,7 +53,7 @@ abstract class ResolutionRule <N: Node>: Rule<N>()
 
 // -------------------------------------------------------------------------------------------------
 
-abstract class ScopeContributor<N: Node> (val scope: ScopeBuilder): AbstractNodeVisitor<N>()
+abstract class ScopeContributor<N: Node> (val scope: ScopeBuilder): NodeVisitor<N>()
 {
 
 }
@@ -141,7 +141,7 @@ class SuperclassRule (val scope: ScopeBuilder): Rule<TypeDecl>()
         val superclass = scope.type_chain(super_name)
         if (superclass == null)
             // TODO: super_type is not resolved attribute
-            report(::ClassNotFoundResolutionError)
+            ;//report(::ClassNotFoundResolutionError)
         else
             node["super_type"] = superclass
     }

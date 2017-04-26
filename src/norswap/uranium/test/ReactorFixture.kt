@@ -5,9 +5,7 @@ import norswap.utils.lines
 import norswap.uranium.Attribute
 import norswap.uranium.Node
 import norswap.uranium.Reactor
-import norswap.uranium.ReactorError
 import org.testng.Assert.*
-import org.testng.ITestResult
 import org.testng.annotations.AfterMethod
 
 /**
@@ -61,7 +59,7 @@ abstract class GrammarReactorFixture: GrammarFixture()
 
     // ---------------------------------------------------------------------------------------------
 
-    fun root_error (input: String, name: String, klass: Class<out ReactorError>)
+    fun root_error (input: String, name: String, tag: Any)
     {
         testing_for_error = true
         val root = parse(input)
@@ -69,7 +67,7 @@ abstract class GrammarReactorFixture: GrammarFixture()
         val errors = reactor.errors()
         assertEquals(errors.size, 1)
         assertTrue(errors[0].affected.contains(Attribute(root, name)))
-        assertEquals(errors[0]::class.java, klass)
+        assertEquals(errors[0].tag, tag)
     }
 
     // ---------------------------------------------------------------------------------------------

@@ -1,34 +1,31 @@
 package norswap.uranium
 
 /**
- * A reactive rule, i.e. a [NodeVisitor] whose [invoke] method registers a [RuleReaction] with a
+ * A reactive rule, i.e. a [NodeVisitor] whose [invoke] method registers a [Reaction] with a
  * [Reactor].
  *
  * In particular, given a domain node, the rule defines [consumed] attributes and [provided]
- * attributes, as well as how to derived the later ([compute]). It is a blueprint for [Reaction]s,
- * that are creating when visiting an AST.
+ * attributes, as well as how to derived the later ([compute]).
  */
-abstract class Rule <N: Node>: AbstractNodeVisitor<N>()
+abstract class Rule <N: Node>: NodeVisitor<N>()
 {
     // ---------------------------------------------------------------------------------------------
 
     override fun visit (node: N, begin: Boolean)
     {
-        if (begin)   return
+        if (begin) return
 
-        val reaction = Reaction(node) {
+        Reaction(node) {
             _consumed = consumed(node)
             _provided = provided(node)
             _trigger  = { compute() }
         }
-
-        if (reaction.consumed.isEmpty()) reactor.enqueue(reaction)
     }
 
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * Given a domain node, returns the attributes required for a [RuleReaction] create by
+     * Given a domain node, returns the attributes required for a [Reaction] created by
      * this rule to trigger.
      *
      * The default implementation returns an empty list.
@@ -38,8 +35,7 @@ abstract class Rule <N: Node>: AbstractNodeVisitor<N>()
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * Given a domain node, returns the attributes provided by a [RuleReaction] created by this
-     * rule.
+     * Given a domain node, returns the attributes provided by a [Reaction] created by this rule.
      */
     abstract fun provided (node: N): List<Attribute>
 
@@ -56,7 +52,7 @@ abstract class Rule <N: Node>: AbstractNodeVisitor<N>()
      * An utility function for reporting errors using an [ErrorConstructor].
      */
     inline fun Reaction<N>.report (mk: ErrorConstructor): Unit
-        = reactor.register_error(mk(this, node))
+        = reactor.register_error(mk(this, node), this)
 
     // ---------------------------------------------------------------------------------------------
 }

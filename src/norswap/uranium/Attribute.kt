@@ -23,19 +23,28 @@ data class Attribute (val node: Node, val name: String)
     // ---------------------------------------------------------------------------------------------
 
     /**
+     * Returns the attribute's value, or null if the attribute is not defined yet.
+     * (Note the attribute value may be set to null, although that should be rare.)
+     */
+    fun get(): Any? = node.raw(name)
+
+    // ---------------------------------------------------------------------------------------------
+
+    /**
      * Sets the value of the attribute to [value].
      */
-    operator fun plusAssign (value: Any) {
+    fun set (value: Any) {
         node[name] = value
     }
 
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * Returns the attribute's value, or null if the attribute is not defined yet.
-     * (Note the attribute value may be set to null, although that should be rare.)
+     * Sets the value of the attribute to [value].
      */
-    fun get(): Any? = node.raw(name)
+    operator fun plusAssign (value: Any) {
+        node[name] = value
+    }
 
     // ---------------------------------------------------------------------------------------------
 

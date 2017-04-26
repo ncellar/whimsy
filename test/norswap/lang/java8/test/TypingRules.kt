@@ -3,10 +3,8 @@ import norswap.lang.java8.Java8Grammar
 import norswap.lang.java8.install_java8_rules
 import norswap.lang.java8.typing.*
 import norswap.uranium.Reactor
-import norswap.uranium.ReactorError
 import norswap.uranium.test.GrammarReactorFixture
 import org.testng.annotations.Test
-import java.lang.Class
 
 class TypingRules: GrammarReactorFixture()
 {
@@ -21,9 +19,9 @@ class TypingRules: GrammarReactorFixture()
 
     // ---------------------------------------------------------------------------------------------
 
-    fun type_error (input: String, klass: Class<out ReactorError>)
+    fun type_error (input: String, tag: Any)
     {
-        root_error(input, "type", klass)
+        root_error(input, "type", tag)
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -58,7 +56,7 @@ class TypingRules: GrammarReactorFixture()
         top_fun { g.not() }
         type("!true",   TBool)
         type("!!false", TBool)
-        type_error("!1", NotTypeError::class.java)
+        type_error("!1", NotTypeError)
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -69,8 +67,8 @@ class TypingRules: GrammarReactorFixture()
         type("~1",  TInt)
         type("~1L", TLong)
         // todo short etc
-        type_error("~1.0",  ComplementTypeError::class.java)
-        type_error("~$str", ComplementTypeError::class.java)
+        type_error("~1.0",  ComplementTypeError)
+        type_error("~$str", ComplementTypeError)
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -83,8 +81,8 @@ class TypingRules: GrammarReactorFixture()
         type("+1L",     TLong)
         type("-1.0",    TDouble)
         // todo short etc
-        type_error("+true", UnaryArithTypeError::class.java)
-        type_error("+$str", UnaryArithTypeError::class.java)
+        type_error("+true", UnaryArithTypeError)
+        type_error("+$str", UnaryArithTypeError)
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -100,8 +98,8 @@ class TypingRules: GrammarReactorFixture()
         type("$str+1",  TString)
         type("1+$str",  TString)
         // todo short etc
-        type_error("1*true", BinaryArithTypeError::class.java)
-        type_error("1-$str", BinaryArithTypeError::class.java)
+        type_error("1*true", BinaryArithTypeError)
+        type_error("1-$str", BinaryArithTypeError)
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -113,8 +111,8 @@ class TypingRules: GrammarReactorFixture()
         type("-1>>>1L", TInt)
         type("1L<<1",   TLong)
         // todo short etc
-        type_error("1>>1f",   ShiftTypeError::class.java)
-        type_error("true<<1", ShiftTypeError::class.java)
+        type_error("1>>1f",   ShiftTypeError)
+        type_error("true<<1", ShiftTypeError)
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -126,8 +124,8 @@ class TypingRules: GrammarReactorFixture()
         type("1L < 1",      TBool)
         type("1 >= 1f",     TBool)
         type("1.0 <= 1L",   TBool)
-        type_error("1 > $str",  OrderingTypeError::class.java)
-        type_error("true <= 1", OrderingTypeError::class.java)
+        type_error("1 > $str",  OrderingTypeError)
+        type_error("true <= 1", OrderingTypeError)
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -149,10 +147,10 @@ class TypingRules: GrammarReactorFixture()
         type("1L==1d",      TBool)
         type("true!=false", TBool)
         // todo cast compatibility
-        type_error("1 == true", EqualNumBoolError::class.java)
-        type_error("true == 1", EqualNumBoolError::class.java)
-        type_error("1==$str",   EqualPrimRefError::class.java)
-        type_error("$str==1",   EqualPrimRefError::class.java)
+        type_error("1 == true", EqualNumBoolError)
+        type_error("true == 1", EqualNumBoolError)
+        type_error("1==$str",   EqualPrimRefError)
+        type_error("$str==1",   EqualPrimRefError)
         // todo cast compatibility
     }
 
@@ -168,10 +166,10 @@ class TypingRules: GrammarReactorFixture()
         type("1 | 1L", TLong)
         type("1L ^ 1", TLong)
         // todo short etc
-        type_error("true & 1", BitwiseMixedError::class.java)
-        type_error("1 | true", BitwiseMixedError::class.java)
-        type_error("$str | 1", BitwiseRefError::class.java)
-        type_error("1 ^ $str", BitwiseRefError::class.java)
+        type_error("true & 1", BitwiseMixedError)
+        type_error("1 | true", BitwiseMixedError)
+        type_error("$str | 1", BitwiseRefError)
+        type_error("1 ^ $str", BitwiseRefError)
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -181,10 +179,10 @@ class TypingRules: GrammarReactorFixture()
         top_fun { g.or_expr() }
         type("true && false", TBool)
         type("false || true", TBool)
-        type_error("1 && true", LogicalTypeError::class.java)
-        type_error("false || 1", LogicalTypeError::class.java)
-        type_error("$str && false", LogicalTypeError::class.java)
-        type_error("true || $str", LogicalTypeError::class.java)
+        type_error("1 && true", LogicalTypeError)
+        type_error("false || 1", LogicalTypeError)
+        type_error("$str && false", LogicalTypeError)
+        type_error("true || $str", LogicalTypeError)
     }
 
     // ---------------------------------------------------------------------------------------------
