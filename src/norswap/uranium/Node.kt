@@ -36,20 +36,16 @@ interface Node: Visitable<Node>
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * Sets the value of the given attribute. If the attribute is already defined, throws a
-     * [Fail] carrying an [AttributeRedefined].
+     * Sets the value of the given attribute.
      *
-     * This may cause consumers waiting for the attribute to be enqueued by the reactor
-     * in order to be triggered.
+     * This may cause consumers to be enqueued by the reactor, if they are triggered
+     * for the first time or need to be recomputed.
      */
     operator fun set (name: String, value: Any)
     {
-        val old = attrs.put(name, value)
-        if (old != null)
-            throw Fail(AttributeRedefined(Attribute(this, name)))
-
-        (consumers[name] ?: emptyList<Reaction<*>>())
-            .forEach { it.satisfy(this, name) }
+        attrs[name] = value
+        val consumers1 = consumers[name] ?: return
+        consumers1.forEach { it.satisfy(this, name) }
     }
 
     // ---------------------------------------------------------------------------------------------

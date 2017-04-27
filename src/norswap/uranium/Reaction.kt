@@ -16,16 +16,18 @@ class Reaction <N: Node> internal constructor (node: N)
     // ---------------------------------------------------------------------------------------------
 
     constructor (node: N, init: Reaction<N>.() -> Unit): this(node) {
+
         init()
+        satisfied = BooleanArray(consumed.size)
 
         // Register the attributes consumed and provided by this reaction with [node].
         for ((node1, name) in provided) { node1.suppliers.append(name, this) }
         for ((node1, name) in consumed) {
             node1.consumers.append(name, this)
-            if (node.raw(name) != null) ++ deps_count
+            if (node1.raw(name) != null) update_satisfaction(node1, name)
         }
 
-        if (deps_count == consumed.size)
+        if (satisfied_count == satisfied.size)
             reactor.enqueue(this)
     }
 
@@ -84,12 +86,13 @@ class Reaction <N: Node> internal constructor (node: N)
 
     // ---------------------------------------------------------------------------------------------
 
-    private var deps_count = 0
+    private var satisfied_count = 0
+    private lateinit var satisfied: BooleanArray
 
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * Whether the reaction has been triggered or not.
+     * Whether the reaction has been triggered at least once.
      *
      * This is set to true by the reactor before running [trigger], so will be true even if
      * [trigger] throws an exception.
@@ -99,10 +102,21 @@ class Reaction <N: Node> internal constructor (node: N)
 
     // ---------------------------------------------------------------------------------------------
 
-    @Suppress("UNUSED_PARAMETER")
-    internal fun satisfy (node: Node, attr: String)
+    private fun update_satisfaction (node: Node, name: String)
     {
-        if (++ deps_count == consumed.size)
+        val i = consumed.indexOfFirst { it.node === node && it.name == name }
+        if (satisfied[i]) return
+        satisfied[i] = true
+        ++satisfied_count
+    }
+
+    // ---------------------------------------------------------------------------------------------
+
+    @Suppress("UNUSED_PARAMETER")
+    internal fun satisfy (node: Node, name: String)
+    {
+        update_satisfaction(node, name)
+        if (satisfied_count == satisfied.size)
             reactor.enqueue(this)
     }
 

@@ -15,7 +15,6 @@ enum class ReactorErrorTag
     ReactionNotTriggered,
     NoSupplier,
     AttributeNotDefined,
-    AttributeRedefined,
     AttributeNotProvided
 }
 
@@ -120,18 +119,7 @@ fun NoSupplier (attribute: Attribute) = ReactorError {
 fun AttributeNotDefined (attribute: Attribute) = ReactorError {
     _tag = AttributeNotDefined
     _attribute_cause = attribute
-    _msg = "Attribute re-defined: $attribute"
-}
-
-// =================================================================================================
-
-/**
- * Indicates that a reaction tried to re-define an existing [attribute].
- */
-fun AttributeRedefined (attribute: Attribute) = ReactorError {
-    _tag = AttributeRedefined
-    _attribute_cause = attribute
-    _msg = "Attribute re-defined: $attribute"
+    _msg = "Attribute not defined: $attribute"
 }
 
 // =================================================================================================
