@@ -1,116 +1,150 @@
 package norswap.lang.java8.typing
 import norswap.uranium.Attribute
-import norswap.uranium.ErrorConstructor
 import norswap.uranium.Node
-import norswap.uranium.Reaction
 import norswap.uranium.ReactorError
+import norswap.lang.java8.typing.TypeError.*
+import norswap.uranium.Reaction
 
 // =================================================================================================
 
-inline fun TypeError (name: String, crossinline init: ReactorError.() -> Unit) = object: ErrorConstructor {
-    val self = this
-    override fun invoke(reac: Reaction<*>, node: Node) = ReactorError {
-        _tag = self
-        _reaction = reac
-        affected = listOf(Attribute(node, "type"))
-        init()
-    }
-    override fun toString() = name
+enum class TypeError
+{
+    NotTypeError,
+    ComplementTypeError,
+    UnaryArithTypeError,
+    BinaryArithTypeError,
+    ShiftTypeError,
+    OrderingTypeError,
+    InstanceofValueError,
+    InstanceofTypeError,
+    InstanceofReifiableError,
+    InstanceofCompatError,
+    EqualNumBoolError,
+    EqualPrimRefError,
+    EqualCompatError,
+    BitwiseMixedError,
+    BitwiseRefError,
+    LogicalTypeError,
 }
 
 // =================================================================================================
 
-val NotTypeError = TypeError ("NotTypeError") {
+inline fun TypeError (reaction: Reaction<*>, node: Node, crossinline init: ReactorError.() -> Unit)
+    = ReactorError {
+        affected = listOf(Attribute(node, "type"))
+        _reaction = reaction
+        init()
+    }
+
+// =================================================================================================
+
+fun NotTypeError (reaction: Reaction<*>, node: Node) = TypeError (reaction, node) {
+    _tag = NotTypeError
     _msg = "Applying '!' on a non-boolean type."
 }
 
 // -------------------------------------------------------------------------------------------------
 
-val ComplementTypeError = TypeError ("ComplementTypeError") {
+fun ComplementTypeError (reaction: Reaction<*>, node: Node) = TypeError (reaction, node) {
+    _tag = ComplementTypeError
     _msg = "Applying '~' on a non-integral type."
 }
 
 // -------------------------------------------------------------------------------------------------
 
-val UnaryArithTypeError = TypeError ("UnaryArithTypeError") {
+fun UnaryArithTypeError (reaction: Reaction<*>, node: Node) = TypeError (reaction, node) {
+    _tag = UnaryArithTypeError
     _msg = "Applying an unary arithmetic operation on a non-numeric type."
 }
 
 // -------------------------------------------------------------------------------------------------
 
-val BinaryArithTypeError = TypeError ("BinaryArithTypeError") {
+fun BinaryArithTypeError (reaction: Reaction<*>, node: Node) = TypeError (reaction, node) {
+    _tag = BinaryArithTypeError
     _msg = "Using a non-numeric value in an arithmetic expression."
 }
 
 // -------------------------------------------------------------------------------------------------
 
-val ShiftTypeError = TypeError ("ShiftTypeError") {
+fun ShiftTypeError (reaction: Reaction<*>, node: Node) = TypeError (reaction, node) {
+    _tag = ShiftTypeError
     _msg = "Using a non-integral value in a shift expression."
 }
 
 // -------------------------------------------------------------------------------------------------
 
-val OrderingTypeError = TypeError ("OrderingTypeError") {
+fun OrderingTypeError (reaction: Reaction<*>, node: Node) = TypeError (reaction, node) {
+    _tag = OrderingTypeError
     _msg = "Using a non-numeric value in a relational expression."
 }
 
 // -------------------------------------------------------------------------------------------------
 
-val InstanceofValueError = TypeError ("InstanceofValueError") {
+fun InstanceofValueError (reaction: Reaction<*>, node: Node) = TypeError (reaction, node) {
+    _tag = InstanceofValueError
     _msg = "Operand of instanceof operator does not have a reference type."
 }
 
 // -------------------------------------------------------------------------------------------------
 
-val InstanceofTypeError = TypeError ("InstanceofTypeError") {
+fun InstanceofTypeError (reaction: Reaction<*>, node: Node) = TypeError (reaction, node) {
+    _tag = InstanceofTypeError
     _msg = "Type operand of instanceof operator is not a reference type."
 }
 
 // -------------------------------------------------------------------------------------------------
 
-val InstanceofReifiableError = TypeError ("InstanceofReifiableError") {
+fun InstanceofReifiableError (reaction: Reaction<*>, node: Node) = TypeError (reaction, node) {
+    _tag = InstanceofReifiableError
     _msg = "Type operand of instanceof operator is not a reifiable type."
 }
 
 // -------------------------------------------------------------------------------------------------
 
-val InstanceofCompatError = TypeError ("InstanceofCompatError") {
+fun InstanceofCompatError (reaction: Reaction<*>, node: Node) = TypeError (reaction, node) {
+    _tag = InstanceofCompatError
     _msg = "Instanceof expression with incompatible operand and type."
 }
 
 // -------------------------------------------------------------------------------------------------
 
-val EqualNumBoolError = TypeError ("EqualNumBoolError") {
+fun EqualNumBoolError (reaction: Reaction<*>, node: Node) = TypeError (reaction, node) {
+    _tag = EqualNumBoolError
     _msg = "Attempting to compare a numeric type with a boolean type."
 }
 
 // -------------------------------------------------------------------------------------------------
 
-val EqualPrimRefError = TypeError ("EqualPrimeRefError") {
+fun EqualPrimRefError (reaction: Reaction<*>, node: Node) = TypeError (reaction, node) {
+    _tag = EqualPrimRefError
     _msg = "Attempting to compare a primitive type with a reference type."
 }
 
 // -------------------------------------------------------------------------------------------------
 
-val EqualCompatError = TypeError ("EqualCompatError") {
+fun EqualCompatError (reaction: Reaction<*>, node: Node) = TypeError (reaction, node) {
+    _tag = EqualCompatError
     _msg = "Trying to compare two incompatible reference types."
 }
 
 // -------------------------------------------------------------------------------------------------
 
-val BitwiseMixedError = TypeError ("BitwiseMixedError") {
+fun BitwiseMixedError (reaction: Reaction<*>, node: Node) = TypeError (reaction, node) {
+    _tag = BitwiseMixedError
     _msg = "Binary bitwise operator has a boolean and a non-boolean operand."
 }
 
 // -------------------------------------------------------------------------------------------------
 
-val BitwiseRefError = TypeError ("BitwiseRefError") {
+fun BitwiseRefError (reaction: Reaction<*>, node: Node) = TypeError (reaction, node) {
+    _tag = BitwiseRefError
     _msg = "Using a non-integral or boolean value in a binary bitwise expression."
 }
 
 // -------------------------------------------------------------------------------------------------
 
-val LogicalTypeError = TypeError ("LogicalTypeError") {
+fun LogicalTypeError (reaction: Reaction<*>, node: Node) = TypeError (reaction, node) {
+    _tag = LogicalTypeError
     _msg = "Using a non-boolean expression in a logical expression."
 }
 

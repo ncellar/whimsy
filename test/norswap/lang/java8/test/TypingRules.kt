@@ -2,6 +2,7 @@ package norswap.lang.java8.test
 import norswap.lang.java8.Java8Grammar
 import norswap.lang.java8.install_java8_rules
 import norswap.lang.java8.typing.*
+import norswap.lang.java8.typing.TypeError.*
 import norswap.uranium.Reactor
 import norswap.uranium.test.GrammarReactorFixture
 import org.testng.annotations.Test
