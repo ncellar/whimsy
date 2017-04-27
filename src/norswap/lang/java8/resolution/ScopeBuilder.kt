@@ -1,5 +1,4 @@
 package norswap.lang.java8.resolution
-import norswap.lang.java8.typing.ClassLike
 import java.util.ArrayDeque
 
 class ScopeBuilder
@@ -22,28 +21,13 @@ class ScopeBuilder
         return out
     }
 
-    fun type_chain (chain: List<String>): ClassLike?
+    fun full_name (klass: String): String
     {
-        TODO()
-//        var klass = current.class_like(chain[0])
-//        var i = 1
-//
-//        while (klass is Missing && i < chain.size) {
-//            klass = Resolver.resolve_fully_qualified_class(chain.subList(0, i))
-//            ++i
-//        }
-//
-//        if (klass is ContinueOld) return klass
-//        if (i == chain.size)   return Missing
-//
-//        // TODO: DELEGATION COMES INTO IT
-//
-//        for (j in i..chain.lastIndex) {
-//            proclaim(klass as ClassLike)
-//            klass = klass.class_likes[chain[j]]
-//            if (klass == null) return null
-//        }
-//
-//        return klass
+        var name: String?
+        for (scope in scope_stack) {
+            name = scope.full_name(klass)
+            if (name != null) return name
+        }
+        throw Error("Could not find full name of $klass")
     }
 }

@@ -137,10 +137,12 @@ interface ClassLike: InstantiableType, Scope, MemberInfo
 
 // -------------------------------------------------------------------------------------------------
 
-val TObject         : ClassLike = Resolver.eagerly("java.lang.Object")
-val TString         : ClassLike = Resolver.eagerly("java.lang.String")
-val TSerializable   : ClassLike = Resolver.eagerly("java.io.Serializable")
-val TCloneable      : ClassLike = Resolver.eagerly("java.lang.Cloneable")
+val TObject         = Resolver.eagerly("java.lang.Object")
+val TEnum           = Resolver.eagerly("java.lang.Enum")
+val TAnnotation     = Resolver.eagerly("java.lang.annotation.Annotation")
+val TString         = Resolver.eagerly("java.lang.String")
+val TSerializable   = Resolver.eagerly("java.io.Serializable")
+val TCloneable      = Resolver.eagerly("java.lang.Cloneable")
 
 // -------------------------------------------------------------------------------------------------
 

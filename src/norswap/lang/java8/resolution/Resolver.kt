@@ -15,9 +15,6 @@ import java.net.URLClassLoader
 // =================================================================================================
 
 // TODO
-// - catch Continue / Fail in reaction call
-//      - continue: fills in continue_in & continued_from
-//      - fail: fills in affected and register
 // - consistency of chain decisions
 //      - what when new source introduces ambiguity?
 //      - always keep oldest?
@@ -255,7 +252,7 @@ object Resolver
      * In the second case, we might still be able to get the information later, when a source
      * file is added to the reactor, so we throw [Continue].
      */
-    fun full_chain (chain: List<String>): ClassLike?
+    fun full_chain (chain: List<String>): ClassLike
     {
         val cached = chain_cache[chain]
         if (cached is Miss) throw Continue(cached.continuation)
@@ -274,8 +271,6 @@ object Resolver
         val reactor    = Context.reactor
         val chain_node = reactor.java_virtual_node.chains
         val required   = Attribute(chain_node, chain.joinToString("."))
-
-        // TODO enqueue
 
         // schedule attempt to load class
         throw Continue(Reaction(chain_node) {
@@ -298,7 +293,7 @@ object Resolver
      *
      * TODO
      */
-    fun klass_chain (scope: Scope, chain: List<String>): ClassLike?
+    fun klass_chain (scope: Scope, chain: List<String>): ClassLike
     {
         var cur_scope: Scope? = scope
 

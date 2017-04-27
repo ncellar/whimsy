@@ -133,8 +133,7 @@ class TypingRules: GrammarReactorFixture()
     @Test fun instanceof()
     {
         top_fun { g.order_expr() }
-        // TODO
-        // type("\"\" instanceof java.lang.String", TBool)
+        type("\"\" instanceof java.lang.String", TBool)
     }
 
     // ---------------------------------------------------------------------------------------------

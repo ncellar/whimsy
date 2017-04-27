@@ -107,7 +107,7 @@ fun ReactionNotTriggered (reaction: Reaction<*>) = ReactorError {
  */
 fun NoSupplier (attribute: Attribute) = ReactorError {
     _tag = NoSupplier
-    this.affected = listOf(attribute)
+    affected = listOf(attribute)
     _attribute_cause = attribute
     _msg = "No supplier for attribute: $attribute"
 }
@@ -141,7 +141,7 @@ fun AttributeRedefined (attribute: Attribute) = ReactorError {
  */
 fun AttributeNotProvided (attribute: Attribute) = ReactorError {
     _tag = NoSupplier
-    this.affected = listOf(attribute)
+    affected = listOf(attribute)
     _attribute_cause = attribute
     _msg = "Attribute not provided: $attribute"
 }
