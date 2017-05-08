@@ -142,6 +142,37 @@ object Resolver
     // ---------------------------------------------------------------------------------------------
 
     /**
+     *
+     */
+    fun klass (cano_name: String, scope: ScopeNode): ClassLike?
+    {
+        val cached = class_cache[cano_name]
+        if (cached is Miss) return null
+
+        val name = cano_to_simple_name(cano_name)
+
+        if (cached != null) {
+            scope[name] = cached
+            return cached
+        }
+
+        Reaction (scope) {
+            _optional = true
+            _provided = listOf(Attribute(scope, name))
+            _trigger  = {
+                val klass = load_class(cano_name)
+                if (klass != null) scope[name] = klass
+                // TODO must not have parameter
+                class_cache[cano_name] = klass ?: Miss(this)
+            }
+        }
+
+        return null
+    }
+
+    // ---------------------------------------------------------------------------------------------
+
+    /**
      * Given the canonical name of a class, returns its information from the cache, or schedules its
      * acquisition with the reactor. If the info is not available, two cases are possible:
      *
@@ -291,22 +322,63 @@ object Resolver
     /**
      * Given a class chain, returns the class info.
      *
-     * TODO
+     * The lookup algorithm will first try to resolve the first component of the chain as simple
+     * class name, and if that works every subsequent component to a nested class.
+     *
+     * TODO test
+     *
+     * TODO edit below (or ref full_chain)
+     *
+     * If the info is not available from the chain cache, two cases are possible:
+     *
+     * - there hasn't been an attempt to load the chain yet
+     * - previous attempts to load the chain were unsuccessful
+     *
+     * In the first case, the method schedules an attempt to load the chain information with
+     * the reactor, then throws [Continue].
+     *
+     * In the second case, we might still be able to get the information later, when a source
+     * file is added to the reactor, so we throw [Continue].
      */
     fun klass_chain (scope: Scope, chain: List<String>): ClassLike
     {
+        // TODO
+        // - will hang on every component to know whether it exists or not?
+        // - no: will return null if not present
+        // - problem: need to load static classes at some point...
+            // - override lookup function in binary thingy to throw a continue
+
         var cur_scope: Scope? = scope
+        var last = 0
+        var cont: Continue? = null
 
-        for (item in chain) {
-            val next = cur_scope?.class_like(item)
-            cur_scope = next
-            if (next == null) break
+        try {
+            for (item in chain) {
+                val next = cur_scope?.class_like(item)
+                cur_scope = next
+                if (next == null) break
+                ++last
+            }
         }
+        catch (e: Continue) { cont = e }
 
-        if (cur_scope is ClassLike) // non-null
-            return cur_scope
+        // TODO if full chain returns but we have a continuation?
+        // - reaction is registered on instantiation
+        // - but continued_in/from only in reactor
+        //      - hard to set when instantiating: we don't know from!
+        //      - expand context?
+        //      - alternative: add dependency on +self to all rules
+        //          - issue: must propagate self down
+        // - triggered = false in reactor
 
-        return full_chain(chain)
+        if (last == chain.size)
+            return cur_scope as ClassLike
+        if (last == 0)
+            return full_chain(chain)
+        if (cont != null)
+            throw cont
+        else
+            throw Fail(ClassNotFoundScopeError())
     }
 
     // ---------------------------------------------------------------------------------------------

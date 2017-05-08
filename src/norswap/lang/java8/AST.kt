@@ -52,7 +52,8 @@ data class Literal (
     val value: Any)
     : CNode(), Expr
 {
-    override fun toString() = "<$value>"
+    override fun toString()
+        = if (value is String) "<\"$value\">" else "<$value>"
 }
 
 // Types -------------------------------------------------------------------------------------------

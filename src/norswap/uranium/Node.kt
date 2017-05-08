@@ -74,3 +74,16 @@ open class CNode: Node
 }
 
 // =================================================================================================
+
+/**
+ * A node that should always remain empty: it's [set] method throws an error.
+ */
+object EmptyNode: CNode()
+{
+    override fun set(name: String, value: Any)
+    {
+        throw NotImplementedError("Don't set attributes of the empty node!")
+    }
+}
+
+// =================================================================================================

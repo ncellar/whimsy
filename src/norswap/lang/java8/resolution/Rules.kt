@@ -27,7 +27,20 @@ fun Reactor.install_java8_resolution_rules()
 
 // -------------------------------------------------------------------------------------------------
 
-abstract class ResolutionRule <N: Node>: Rule<N>()
+abstract class ScopeRule <N: Node> (val scope: ScopeBuilder): Rule<N>()
+{
+    lateinit var sc: Scope
+
+    override fun visit (node: N, begin: Boolean)
+    {
+        sc = scope.current
+        super.visit(node, begin)
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+abstract class ResolutionRule <N: Node> (scope: ScopeBuilder): ScopeRule<N>(scope)
 {
     override fun provided (node: N)
         = list(Attribute(node, "resolved"))
@@ -72,41 +85,56 @@ class FileRule (scope: ScopeBuilder): ScopeContributor<File>(scope)
 
 // -------------------------------------------------------------------------------------------------
 
-class ImportRule (scope: ScopeBuilder): ScopeContributor<Import>(scope)
+class ImportRule (scope: ScopeBuilder): ScopeRule<Import>(scope)
 {
-    override fun visit (node: Import, begin: Boolean)
+    private fun attr_for_scope_nodes (node: Import, name: String): List<Attribute>
     {
-        // TODO this is visitor, not a rule!
-        // TODO rewrite as incremental, visitor-integrated
+        if (node.static) return list(
+            Attribute(sc.field_node, name),
+            Attribute(sc.method_node, name),
+            Attribute(sc.class_like_node, name))
+        else return list(
+            Attribute(sc.class_like_node, name))
+    }
 
+    override fun provided (node: Import): List<Attribute>
+    {
+        if (!node.wildcard)
+            return attr_for_scope_nodes(node, node.name.last())
+        else
+            return attr_for_scope_nodes(node, "+self")
+    }
+
+    override fun Reaction<Import>.compute()
+    {
         if (node.static && node.wildcard)
         {
             val klass = Resolver.full_chain(node.name)
-            klass.members().forEach { scope.current.put_member(it.name, it) }
+            klass.members().forEach { sc.put_member(it) }
         }
         else if (node.static)
         {
             val full_name = node.name.except(1).joinToString(".")
             val members = Resolver.resolve_members(full_name, node.name.last())
-            members.forEach { scope.current.put_member(it.name, it) }
+            members.forEach { sc.put_member(it) }
         }
         else if (node.wildcard)
         {
             val klass = Resolver.full_chain(node.name)
-            klass.members().forEach { scope.current.put_member(it.name, it) }
+            klass.members().forEach { sc.put_member(it) }
         }
         else
         {
             val full_name = node.name.joinToString(".")
             val klass = Resolver.klass(full_name)
-            scope.current.put_class_like(node.name.last(), klass)
+            sc.put_class_like(klass)
         }
     }
 }
 
 // -------------------------------------------------------------------------------------------------
 
-class SuperclassRule (val scope: ScopeBuilder): Rule<TypeDecl>()
+class SuperclassRule (scope: ScopeBuilder): ScopeRule<TypeDecl>(scope)
 {
     override fun provided (node: TypeDecl)
         = list(Attribute(node, "super_type"))
@@ -144,21 +172,28 @@ class TypeDeclRule (scope: ScopeBuilder): ScopeContributor<TypeDecl>(scope)
         if (!begin) scope.pop()
 
         val klass = SourceClassLike(scope.full_name(node.name), node)
-        scope.current.put_class_like(klass.name, klass)
+        scope.current.put_class_like(klass)
         scope.push(klass)
     }
 }
 
 // -------------------------------------------------------------------------------------------------
 
-class ClassTypeRule (val scope: ScopeBuilder): ResolutionRule<ClassType>()
+class ClassTypeRule (scope: ScopeBuilder): ResolutionRule<ClassType>(scope)
 {
     override val domain = list(ClassType::class.java)
 
+    // TODO The problem with instanceof
+    // - using package scope: will lookup java on scope, and continue
+    //   - problem: we would like to see if there is not a result beyond that yet!
+    //   - solution: catch the exception, try beyond, still throw
+    // - using empty scope: will lookup java on scope, and fail
+    //   - then lookup globally and finds it
+
     override fun Reaction<ClassType>.compute()
     {
-        val name = node.parts.map { it.name }.joinToString(".")
-        val klass = Resolver.klass(name)
+        val name = node.parts.map { it.name }
+        val klass = Resolver.klass_chain(sc, name)
         node["resolved"] = klass
     }
 }

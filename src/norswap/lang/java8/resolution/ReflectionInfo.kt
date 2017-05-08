@@ -5,8 +5,6 @@ import norswap.lang.java8.typing.FieldInfo
 import norswap.lang.java8.typing.MethodInfo
 import norswap.lang.java8.typing.RefType
 import norswap.lang.java8.typing.TypeParameter
-import norswap.utils.multimap.MutableMultiMap
-import norswap.utils.multimap.multi_assoc
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.lang.reflect.TypeVariable
@@ -45,22 +43,12 @@ open class ReflectionClassLike (val klass: Class<*>): ClassLike, ScopeBase()
     override val super_type
         = klass.superclass ?. let { ReflectionClassLike(it) }
 
-    override val fields      by lazy { compute_fields()  }
-    override val methods     by lazy { compute_methods() }
-    override val class_likes by lazy { compute_class_likes() }
-    override val type_params by lazy { compute_type_params() }
-
-    private fun compute_fields(): MutableMap<String, FieldInfo>
-        = klass.fields.associateTo(HashMap()) { it.name to ReflectionFieldInfo(it) }
-
-    private fun compute_methods(): MutableMultiMap<String, MethodInfo>
-        = klass.methods.multi_assoc { it.name to ReflectionMethodInfo(it) as MethodInfo }
-
-    private fun compute_class_likes(): MutableMap<String, ClassLike>
-        = klass.classes.associateTo(HashMap()) { it.name to ReflectionClassLike(it) }
-
-    private fun compute_type_params(): MutableMap<String, TypeParameter>
-        = klass.typeParameters.associateTo(HashMap()) { it.name to ReflectionTypeParameter(it) }
+    init {
+        klass.fields         .forEach { put_field      (ReflectionFieldInfo     (it)) }
+        klass.methods        .forEach { put_method     (ReflectionMethodInfo    (it)) }
+        klass.classes        .forEach { put_class_like (ReflectionClassLike     (it)) }
+        klass.typeParameters .forEach { put_param      (ReflectionTypeParameter (it)) }
+    }
 
     override fun toString() = canonical_name
 }

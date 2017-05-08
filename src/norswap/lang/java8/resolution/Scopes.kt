@@ -5,8 +5,30 @@ import norswap.lang.java8.typing.MemberInfo
 import norswap.lang.java8.typing.MethodInfo
 import norswap.lang.java8.typing.RefType
 import norswap.lang.java8.typing.TypeParameter
+import norswap.uranium.Attribute
+import norswap.uranium.CNode
+import norswap.uranium.Context
+import norswap.uranium.Node
+import norswap.uranium.Reaction
+import norswap.utils.cast
 import norswap.utils.maybe_list
-import norswap.utils.multimap.*
+
+// =================================================================================================
+
+open class ScopeNode: CNode()
+
+// =================================================================================================
+
+/**
+ * A node that should always remain empty: it's [set] method throws an error.
+ */
+object EmptyScopeNode: ScopeNode()
+{
+    override fun set(name: String, value: Any)
+    {
+        throw NotImplementedError("Don't set attributes of the empty scope node!")
+    }
+}
 
 // =================================================================================================
 
@@ -14,18 +36,70 @@ interface Scope
 {
     // ---------------------------------------------------------------------------------------------
 
+    val outer: Scope?
+        get() = null
+
+    // ---------------------------------------------------------------------------------------------
+
+    val field_node: ScopeNode
+        get() = EmptyScopeNode
+
+    val method_node: ScopeNode
+        get() = EmptyScopeNode
+
+    val class_like_node: ScopeNode
+        get() = EmptyScopeNode
+
+    val type_param_node: ScopeNode
+        get() = EmptyScopeNode
+
+    // ---------------------------------------------------------------------------------------------
+
+    fun modifier (label: String, node: ScopeNode, name: String)
+    {
+        Reaction (node) {
+            this.label = label
+            _pushed = Context.reaction
+            _consumed = listOf(Attribute(node, name))
+            _trigger = {}
+            _optional = true
+        }
+    }
+
+    // ---------------------------------------------------------------------------------------------
+
     fun field (name: String): FieldInfo?
-        = null
+    {
+        val out: FieldInfo? = field_node.raw(name).cast()
+        if (out != null) return out
+        modifier("Field Scope Update", field_node, name)
+        return outer?.field(name)
+    }
 
     // also has <init>, <clinit>
     fun method (name: String): Collection<MethodInfo>
-        = emptyList()
+    {
+        val out: Collection<MethodInfo>? = method_node.raw(name).cast()
+        if (out != null) return out
+        modifier("Method Scope Update", method_node, name)
+        return outer?.method(name) ?: emptyList<MethodInfo>()
+    }
 
     fun class_like (name: String): ClassLike?
-        = null
+    {
+        val out: ClassLike? = class_like_node.raw(name).cast()
+        if (out != null) return out
+        modifier("Class Scope Update", class_like_node, name)
+        return outer?.class_like(name)
+    }
 
     fun type_param (name: String): TypeParameter?
-        = null
+    {
+        val out: TypeParameter? = type_param_node.raw(name).cast()
+        if (out != null) return out
+        modifier("Field Scope Update", type_param_node, name)
+        return outer?.type_param(name)
+    }
 
     // ---------------------------------------------------------------------------------------------
 
@@ -38,53 +112,51 @@ interface Scope
     // ---------------------------------------------------------------------------------------------
 
     fun fields(): Collection<FieldInfo>
-        = emptyList()
+        = field_node.attrs.values.cast()
 
     fun methods(): Collection<MethodInfo>
-        = emptyList()
+        = (method_node.attrs.values.cast<Collection<Collection<MethodInfo>>>()).flatten()
 
     fun class_likes(): Collection<ClassLike>
-        = emptyList()
+        = class_like_node.attrs.values.cast()
 
     fun type_params(): Collection<TypeParameter>
-        = emptyList()
-
-    // ---------------------------------------------------------------------------------------------
+        = type_param_node.attrs.values.cast()
 
     fun members(): Collection<MemberInfo>
         = fields() + methods() + class_likes()
 
-    fun types(): Collection<RefType>
-        = type_params() + class_likes()
+    // ---------------------------------------------------------------------------------------------
+
+    fun put_field (value: FieldInfo)
+        { field_node[value.name] = value }
+
+    fun put_method (value: MethodInfo) {
+        val list = method_node.raw(value.name).cast<ArrayList<MethodInfo>?>() ?: ArrayList()
+        list.add(value)
+        method_node[value.name] = list
+    }
+
+    fun put_class_like (value: ClassLike)
+        { class_like_node[value.name] = value }
+
+    fun put_param (value: TypeParameter)
+        { type_param_node[value.name] = value }
 
     // ---------------------------------------------------------------------------------------------
 
-    fun put_field (name: String, value: FieldInfo): Unit
-        = throw NotImplementedError()
-
-    fun put_method (name: String, value: MethodInfo): Unit
-        = throw NotImplementedError()
-
-    fun put_class_like (name: String, value: ClassLike): Unit
-        = throw NotImplementedError()
-
-    fun put_param (name: String, value: TypeParameter): Unit
-        = throw NotImplementedError()
-
-    // ---------------------------------------------------------------------------------------------
-
-    fun put_member (name: String, value: MemberInfo)
+    fun put_member (value: MemberInfo)
     {
         when (value) {
-            is FieldInfo    -> put_field      (name, value)
-            is MethodInfo   -> put_method     (name, value)
-            is ClassLike    -> put_class_like (name, value)
+            is FieldInfo    -> put_field      (value)
+            is MethodInfo   -> put_method     (value)
+            is ClassLike    -> put_class_like (value)
         }
     }
 
     // ---------------------------------------------------------------------------------------------
 
-    fun full_name (klass: String): String? = null
+    fun full_name (klass: String): String? = outer?.full_name(klass)
 }
 
 // =================================================================================================
@@ -93,61 +165,17 @@ abstract class ScopeBase: Scope
 {
     // ---------------------------------------------------------------------------------------------
 
-    open val fields      : MutableMap<String, FieldInfo>       = HashMap()
-    open val methods     : MutableMultiMap<String, MethodInfo> = HashMultiMap()
-    open val class_likes : MutableMap<String, ClassLike>       = HashMap()
-    open val type_params : MutableMap<String, TypeParameter>   = HashMap()
+    override val outer get() = _outer
+    var _outer: Scope? = null
 
     // ---------------------------------------------------------------------------------------------
 
-    override fun field (name: String)
-        = fields[name]
-
-    override fun method (name: String): Collection<MethodInfo>
-        = methods[name] ?: emptyList<MethodInfo>()
-
-    override fun class_like (name: String)
-        = class_likes[name]
-
-    override fun type_param (name: String)
-        = type_params[name]
+    override val field_node         = ScopeNode()
+    override val method_node        = ScopeNode()
+    override val class_like_node    = ScopeNode()
+    override val type_param_node    = ScopeNode()
 
     // ---------------------------------------------------------------------------------------------
-
-    override fun type (name: String)
-        = type_params[name] ?: class_likes[name]
-
-    // ---------------------------------------------------------------------------------------------
-
-    override fun fields(): Collection<FieldInfo>
-        = fields.values
-
-    override fun methods(): Collection<MethodInfo>
-        = methods.values.flatten()
-
-    override fun class_likes(): Collection<ClassLike>
-        = class_likes.values
-
-    override fun type_params(): Collection<TypeParameter>
-        = type_params.values
-
-    // ---------------------------------------------------------------------------------------------
-
-    override fun put_field (name: String, value: FieldInfo) {
-        fields[name] = value
-    }
-
-    override fun put_method (name: String, value: MethodInfo) {
-        methods.append(name, value)
-    }
-
-    override fun put_class_like (name: String, value: ClassLike) {
-        class_likes[name] = value
-    }
-
-    override fun put_param(name: String, value: TypeParameter) {
-        type_params[name] = value
-    }
 }
 
 // =================================================================================================
@@ -158,22 +186,60 @@ object EmptyScope: Scope
 
 open class PackageScope (val name: String): Scope
 {
-    object Empty: PackageScope("") {
+    // ---------------------------------------------------------------------------------------------
+
+    object Default: PackageScope("") {
         override fun full_name (klass: String) = klass
     }
 
-    override fun class_like (name: String)
-        = Resolver.klass(full_name(name))
+    // ---------------------------------------------------------------------------------------------
 
     override fun full_name (klass: String)
-        = if (name == "") klass else "$name.$klass"
+        = "$name.$klass"
+
+    // ---------------------------------------------------------------------------------------------
+
+    override val class_like_node = ScopeNode()
+
+    // ---------------------------------------------------------------------------------------------
+
+    override fun class_like (name: String): ClassLike?
+    {
+        var klass = class_like_node.raw(name)
+        if (klass != null) return klass as ClassLike
+
+        klass = Resolver.klass(full_name(name), class_like_node)
+
+        if (klass == null) {
+            // TODO this should only be registered once
+            // - what to look for, consumers?
+            // - what inside them?
+            // - something that relates them to the attribute being derived
+            // - so current reaction in pushed?
+            // - must access current reaction...  -> can be done through context
+            // - the issue is that rules may be re-run, if in case of repeated misses, don't want
+            //   to re-register modifier
+            // - problem: lookup cost: sifting through consumers
+
+            //val consumers = class_like_node.consumers[name]?.contains(null)
+            modifier("Package Scope Update", class_like_node, name)
+        }
+
+
+        return klass
+    }
+
+    // ---------------------------------------------------------------------------------------------
+
+    override fun field (name: String) = null
+    override fun method (name: String) = emptyList<MethodInfo>()
+    override fun type_param (name: String) = null
+
+    // ---------------------------------------------------------------------------------------------
 }
 
 // =================================================================================================
 
 open class FileScope: Scope
-{
-
-}
 
 // =================================================================================================

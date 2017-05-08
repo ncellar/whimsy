@@ -16,11 +16,19 @@ abstract class Rule <N: Node>: NodeVisitor<N>()
         if (begin) return
 
         Reaction(node) {
+            label = this@Rule.label
             _consumed = consumed(node)
             _provided = provided(node)
             _trigger  = { compute() }
         }
     }
+
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * The label for reactions created by this rule.
+     */
+    open val label = this::class.java.simpleName
 
     // ---------------------------------------------------------------------------------------------
 
@@ -42,7 +50,7 @@ abstract class Rule <N: Node>: NodeVisitor<N>()
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * Derive the provided attributes: implementation for [RuleReaction.trigger].
+     * Derive the provided attributes: implementation for [Reaction.trigger].
      */
     abstract fun Reaction<N>.compute()
 

@@ -41,6 +41,14 @@ class Reaction <N: Node> internal constructor (node: N)
     // ---------------------------------------------------------------------------------------------
 
     /**
+     * A label for the reaction, to display in front of its required/provided types when
+     * printing.
+     */
+    var label: String = "Reaction"
+
+    // ---------------------------------------------------------------------------------------------
+
+    /**
      * Trigger the reaction in order to derive the supplied attributes.
      */
     val trigger get() = _trigger
@@ -73,6 +81,15 @@ class Reaction <N: Node> internal constructor (node: N)
     // ---------------------------------------------------------------------------------------------
 
     /**
+     * Indicates whether the reaction is optional. Optional reactions do not cause
+     * an error if they are never triggered, and are not forced to provide their attributes.
+     */
+    val optional get() = _optional
+    var _optional = false
+
+    // ---------------------------------------------------------------------------------------------
+
+    /**
      * The reaction that continues this one (if any), or null.
      */
     var continued_in: Reaction<*>? = null
@@ -80,9 +97,11 @@ class Reaction <N: Node> internal constructor (node: N)
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * The reaction that this reaction is continued from (if any), or null.
+     * A reactions that should be enqueued in the reactor (if ready) after this reaction
+     * triggers.
      */
-    var continued_from: Reaction<*>? = null
+    val pushed: Reaction<*>? get() = _pushed
+    var _pushed: Reaction<*>? = null
 
     // ---------------------------------------------------------------------------------------------
 
@@ -92,13 +111,20 @@ class Reaction <N: Node> internal constructor (node: N)
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * Whether the reaction has been triggered at least once.
-     *
-     * This is set to true by the reactor before running [trigger], so will be true even if
-     * [trigger] throws an exception.
+     * The number of times the reaction has been triggered.
+     * This is updated after the reaction has completed triggering without [Continue].
      */
-    var triggered = false
+    var triggers = 0
         internal set
+
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * Whether the reaction has been triggered at least once.
+     * This is updated after the reaction has completed triggering without [Continue].
+     */
+    val triggered: Boolean
+        get() = triggers > 0
 
     // ---------------------------------------------------------------------------------------------
 
@@ -122,7 +148,15 @@ class Reaction <N: Node> internal constructor (node: N)
 
     // ---------------------------------------------------------------------------------------------
 
-    override fun toString() = "$consumed -> $provided"
+    /**
+     * Whether the reaction is ready to be triggered (all its required attributes are available).
+     */
+    val ready: Boolean
+        get() = satisfied_count == satisfied.size
+
+    // ---------------------------------------------------------------------------------------------
+
+    override fun toString() = "$label: $consumed -> $provided"
 
     // ---------------------------------------------------------------------------------------------
 }

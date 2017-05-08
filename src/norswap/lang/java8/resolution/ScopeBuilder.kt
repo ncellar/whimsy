@@ -3,7 +3,7 @@ import java.util.ArrayDeque
 
 class ScopeBuilder
 {
-    var current: Scope = PackageScope("")
+    var current: Scope = PackageScope("") // EmptyScope
         private set
 
     private val scope_stack = ArrayDeque<Scope>()

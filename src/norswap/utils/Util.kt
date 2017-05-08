@@ -251,7 +251,31 @@ fun nth_superclass_targ (obj: Any, n: Int): Class<*>?
  * Returns of first instance of [T] from the iterable, or throws an exception.
  */
 inline fun <reified T> Iterable<*>.first_instance(): T
-    = filter { it is T } as T
+    = first { it is T } as T
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * Returns of first instance of [T] from the array, or throws an exception.
+ */
+inline fun <reified T> Array<*>.first_instance(): T
+    = first { it is T } as T
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * Returns of first instance of [T] from the iterable, or returns null.
+ */
+inline fun <reified T> Iterable<*>.find_instance(): T?
+    = find { it is T } as T?
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * Returns of first instance of [T] from the array, or returns null.
+ */
+inline fun <reified T> Array<*>.find_instance(): T?
+    = find { it is T } as T?
 
 // -------------------------------------------------------------------------------------------------
 

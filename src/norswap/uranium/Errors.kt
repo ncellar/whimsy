@@ -12,8 +12,9 @@ typealias ErrorConstructor = (Reaction<*>, Node) -> ReactorError
 
 enum class ReactorErrorTag
 {
-    ReactionNotTriggered,
+    ReactionPending,
     NoSupplier,
+    SupplierPending,
     AttributeNotDefined,
     AttributeNotProvided
 }
@@ -92,9 +93,10 @@ inline fun ReactorError (init: ReactorError.() -> Unit): ReactorError
  * An error created at the end of a reactor's run, that indicates that a reaction
  * was not triggered during the run.
  */
-fun ReactionNotTriggered (reaction: Reaction<*>) = ReactorError {
-    _tag = ReactionNotTriggered
+fun ReactionPending (reaction: Reaction<*>) = ReactorError {
+    _tag = ReactionPending
     _reaction = reaction
+    affected = reaction.provided
     _msg = "Reaction not triggered: $reaction"
 }
 
@@ -109,6 +111,15 @@ fun NoSupplier (attribute: Attribute) = ReactorError {
     affected = listOf(attribute)
     _attribute_cause = attribute
     _msg = "No supplier for attribute: $attribute"
+}
+
+// =================================================================================================
+
+fun SupplierPending (attribute: Attribute, cause: Attribute) = ReactorError {
+    _tag = SupplierPending
+    affected = listOf(attribute)
+    _attribute_cause = cause
+    _msg = "Supplier for required attribute ($cause) pending, cannot derive $attribute"
 }
 
 // =================================================================================================
@@ -128,10 +139,10 @@ fun AttributeNotDefined (attribute: Attribute) = ReactorError {
  * Indicate that a rule instance that should have supplied an attribute didn't do so.
  */
 fun AttributeNotProvided (attribute: Attribute) = ReactorError {
-    _tag = NoSupplier
+    _tag = AttributeNotDefined
     affected = listOf(attribute)
     _attribute_cause = attribute
-    _msg = "Attribute not provided: $attribute"
+    _msg = "Attribute not provided by reaction: $attribute"
 }
 
 // =================================================================================================

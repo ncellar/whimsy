@@ -150,14 +150,16 @@ class Reactor
      */
     fun derive()
     {
+        Context.reactor = this
         while (queue.isNotEmpty())
         {
+
             val reaction = queue.remove()
+            Context.reaction = reaction
             val errors_size = errors.size
             var error: ReactorError? = null
 
             try {
-                reaction.triggered = true
                 reaction.trigger()
             }
             catch (e: Fail) {
@@ -166,16 +168,20 @@ class Reactor
             }
             catch (e: Continue) {
                 reaction.continued_in = e.continuation
-                e.continuation.continued_from = reaction
+                e.continuation._pushed = reaction
                 continue
             }
 
-            if (reaction.continued_from != null)
-                enqueue(reaction.continued_from!!)
+            ++ reaction.triggers
+
+            if (error == null) reaction.pushed.inn { if (it.ready) enqueue(it) }
 
             // check that all attributes have been provided
             for (attr in reaction.provided)
             {
+                // optional reaction don't have to provide their attributes
+                if (reaction.optional) continue
+
                 // attribute provided
                 if (attr.get() != null) continue
 
@@ -188,8 +194,13 @@ class Reactor
                 if (error != null)
                     error.affected += attr
                 // attribute unexplainably not provided: register a new error
-                else
+                else {
+                    // TODO
+                    println(reaction)
+                    println(attr)
                     register_error(AttributeNotProvided(attr), reaction)
+                }
+
             }
         }
     }
@@ -198,26 +209,26 @@ class Reactor
 
     /**
      * Returns a list of errors that occurred during this reactor's lifetime,
-     * as well as [ReactionNotTriggered]s and [NoSupplier]s for all reactions
+     * as well as [ReactionPending]s and [NoSupplier]s for all reactions
      * associated to any tree under the currently registered roots.
      */
     fun errors (): List<ReactorError>
         = roots
         .map(this::pending_reactions)
         .flatten()
-        .map(::ReactionNotTriggered)
+        .map(::ReactionPending)
         .let(this::errors_with_pending)
 
     // ---------------------------------------------------------------------------------------------
 
     /**
      * Returns a list of errors that occurred during this reactor's lifetime,
-     * as well as [ReactionNotTriggered]s and [NoSupplier]s for all reactions
+     * as well as [ReactionPending]s and [NoSupplier]s for all reactions
      * associated to tree under [node].
      */
     fun errors (node: Node): List<ReactorError>
         = pending_reactions(node)
-        .map(::ReactionNotTriggered)
+        .map(::ReactionPending)
         .let(this::errors_with_pending)
 
     // ---------------------------------------------------------------------------------------------
@@ -229,7 +240,7 @@ class Reactor
         node.visit_around { node, begin ->
             if (!begin) return@visit_around
             node.suppliers.values.flat_foreach {
-                if (!it.triggered) set.add(it)
+                if (!it.triggered && !it.optional) set.add(it)
             }
         }
 
@@ -244,17 +255,27 @@ class Reactor
         errors.addAll(pending)
 
         // find causes for missing attributes
-        pending.forEach {
-            val missing_attributes = it.reaction!!.consumed.filter { it.get() == null }
-
-            it._causes = missing_attributes.map { missing ->
-                var cause = errors.find { it.affected.contains(missing) }
-                if (cause == null) {
-                    cause = NoSupplier(missing)
-                    errors.add(cause)
-                    cause
+        for (it in pending)
+        {
+            // cause: continuation is pending
+            val continuation = it.reaction?.continued_in
+            if (continuation != null) {
+                val cause = pending.find { it.reaction == continuation }
+                if (cause != null) {
+                    it._causes = listOf(cause)
+                    continue
                 }
-                else cause
+            }
+
+            val missing_attributes = it.reaction!!.consumed.filter { it.get() == null }
+            it._causes = missing_attributes.map { missing ->
+
+                // cause: an error precludes the derivation of the attribute
+                // (this might be the fact that another reaction is pending)
+                errors.find { it.affected.contains(missing) }
+
+                // unknown cause
+                ?: NoSupplier(missing).also { errors.add(it) }
             }
         }
 
