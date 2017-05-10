@@ -4,6 +4,9 @@ import norswap.lang.java8.ast.File
 import norswap.lang.java8.ast.Import
 import norswap.lang.java8.ast.TypeDecl
 import norswap.lang.java8.ast.TypeDeclKind.*
+import norswap.lang.java8.scopes.FileScope
+import norswap.lang.java8.scopes.PackageScope
+import norswap.lang.java8.scopes.Scope
 import norswap.lang.java8.typing.TObject
 import norswap.uranium.NodeVisitor
 import norswap.utils.except
@@ -12,6 +15,7 @@ import norswap.uranium.Node
 import norswap.uranium.Reactor
 import norswap.uranium.Rule
 import norswap.uranium.Reaction
+import norswap.utils.inn
 import kotlin.collections.listOf as list
 
 // -------------------------------------------------------------------------------------------------
@@ -72,12 +76,14 @@ class FileRule (scope: ScopeBuilder): ScopeContributor<File>(scope)
     override fun visit (node: File, begin: Boolean)
     {
         if (begin) {
-            if (node.pkg != null)
-                scope.push(PackageScope(node.pkg.name.joinToString(".")))
-                scope.push(FileScope())
+            val pkg = node.pkg
+                .inn { PackageScope(it.name.joinToString(".")) }
+                ?: PackageScope.Default
+            scope.push(pkg)
+            scope.push(FileScope(pkg))
         }
         else {
-            if (node.pkg != null) scope.pop()
+            scope.pop()
             scope.pop()
         }
     }
@@ -126,7 +132,7 @@ class ImportRule (scope: ScopeBuilder): ScopeRule<Import>(scope)
         else
         {
             val full_name = node.name.joinToString(".")
-            val klass = Resolver.klass(full_name)
+            val klass = Resolver.klass(full_name)!! // TODO hackfix
             sc.put_class_like(klass)
         }
     }

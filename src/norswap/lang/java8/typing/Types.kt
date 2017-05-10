@@ -1,8 +1,5 @@
 package norswap.lang.java8.typing
-import norswap.lang.java8.ast.TypeDeclKind
-import norswap.lang.java8.resolution.EmptyScope
 import norswap.lang.java8.resolution.Resolver
-import norswap.lang.java8.resolution.Scope
 import norswap.utils.maybe_list
 
 // -------------------------------------------------------------------------------------------------
@@ -10,9 +7,6 @@ import norswap.utils.maybe_list
 interface TType
 {
     val name: String
-
-    val scope: Scope
-        get() = EmptyScope
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -64,7 +58,6 @@ interface RefType: TType
 interface InstantiableType: RefType
 {
     val super_type: RefType?
-        get() = TObject
 
     override val super_types: List<RefType>
         get() = super_interfaces + maybe_list(super_type)
@@ -129,14 +122,6 @@ object TNull: RefType
 
 // -------------------------------------------------------------------------------------------------
 
-interface ClassLike: InstantiableType, Scope, MemberInfo
-{
-    val canonical_name: String
-    val kind: TypeDeclKind
-}
-
-// -------------------------------------------------------------------------------------------------
-
 val TObject         = Resolver.eagerly("java.lang.Object")
 val TEnum           = Resolver.eagerly("java.lang.Enum")
 val TAnnotation     = Resolver.eagerly("java.lang.annotation.Annotation")
@@ -146,20 +131,31 @@ val TCloneable      = Resolver.eagerly("java.lang.Cloneable")
 
 // -------------------------------------------------------------------------------------------------
 
-abstract class BoxedType (full_name: String, val loaded: ClassLike =  Resolver.eagerly(full_name))
-    : ClassLike by loaded
+val BVoid   = Resolver.eagerly("java.lang.Void")
+val BBool   = Resolver.eagerly("java.lang.Boolean")
+val BByte   = Resolver.eagerly("java.lang.Byte")
+val BChar   = Resolver.eagerly("java.lang.Character")
+val BShort  = Resolver.eagerly("java.lang.Short")
+val BInt    = Resolver.eagerly("java.lang.Integer")
+val BLong   = Resolver.eagerly("java.lang.Long")
+val BFloat  = Resolver.eagerly("java.lang.Float")
+val BDouble = Resolver.eagerly("java.lang.Double")
 
 // -------------------------------------------------------------------------------------------------
 
-object BVoid   : BoxedType("java.lang.Void")
-object BBool   : BoxedType("java.lang.Boolean")
-object BByte   : BoxedType("java.lang.Bytes")
-object BChar   : BoxedType("java.lang.Character")
-object BShort  : BoxedType("java.lang.Short")
-object BInt    : BoxedType("java.lang.Integer")
-object BLong   : BoxedType("java.lang.Long")
-object BFloat  : BoxedType("java.lang.Float")
-object BDouble : BoxedType("java.lang.Double")
+val TType.is_boxed: Boolean
+    get() = when (this) {
+        BInt    -> true
+        BChar   -> true
+        BDouble -> true
+        BLong   -> true
+        BFloat  -> true
+        BBool   -> true
+        BVoid   -> true
+        BByte   -> true
+        BShort  -> true
+        else    -> false
+    }
 
 // -------------------------------------------------------------------------------------------------
 

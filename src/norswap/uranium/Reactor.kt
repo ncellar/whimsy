@@ -194,13 +194,8 @@ class Reactor
                 if (error != null)
                     error.affected += attr
                 // attribute unexplainably not provided: register a new error
-                else {
-                    // TODO
-                    println(reaction)
-                    println(attr)
+                else
                     register_error(AttributeNotProvided(attr), reaction)
-                }
-
             }
         }
     }

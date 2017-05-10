@@ -1,4 +1,6 @@
 package norswap.lang.java8.resolution
+import norswap.lang.java8.scopes.PackageScope
+import norswap.lang.java8.scopes.Scope
 import java.util.ArrayDeque
 
 class ScopeBuilder
@@ -23,6 +25,7 @@ class ScopeBuilder
 
     fun full_name (klass: String): String
     {
+        // TODO
         var name: String?
         for (scope in scope_stack) {
             name = scope.full_name(klass)

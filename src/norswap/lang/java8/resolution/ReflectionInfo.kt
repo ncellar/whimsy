@@ -1,6 +1,6 @@
 package norswap.lang.java8.resolution
 import norswap.lang.java8.ast.TypeDeclKind
-import norswap.lang.java8.typing.ClassLike
+import norswap.lang.java8.scopes.ClassScope
 import norswap.lang.java8.typing.FieldInfo
 import norswap.lang.java8.typing.MethodInfo
 import norswap.lang.java8.typing.RefType
@@ -26,7 +26,7 @@ class ReflectionFieldInfo (val field: Field): FieldInfo()
 
 // -------------------------------------------------------------------------------------------------
 
-open class ReflectionClassLike (val klass: Class<*>): ClassLike, ScopeBase()
+open class ReflectionClassLike (val klass: Class<*>): ClassScope()
 {
     override val name = klass.simpleName!!
 

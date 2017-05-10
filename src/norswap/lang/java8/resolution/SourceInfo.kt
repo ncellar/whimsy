@@ -1,7 +1,7 @@
 package norswap.lang.java8.resolution
 import norswap.lang.java8.ast.TypeDecl
 import norswap.lang.java8.ast.TypeDeclKind
-import norswap.lang.java8.typing.ClassLike
+import norswap.lang.java8.scopes.ClassScope
 import norswap.lang.java8.typing.RefType
 import norswap.lang.java8.typing.TypeParameter
 import norswap.utils.cast
@@ -19,7 +19,7 @@ class SourceTypeParameter: TypeParameter
 
 // -------------------------------------------------------------------------------------------------
 
-class SourceClassLike (override val canonical_name: String, val decl: TypeDecl): ClassLike, ScopeBase()
+class SourceClassLike (override val canonical_name: String, val decl: TypeDecl): ClassScope()
 {
     override val name = decl.name
 

@@ -49,7 +49,6 @@ fun binary_promotion (lt: NumericType, rt: NumericType): NumericType
  */
 val TType.unboxed: TType
     get() = when (this) {
-        !is BoxedType -> this
         BByte         -> TByte
         BChar         -> TChar
         BInt          -> TInt
@@ -58,16 +57,8 @@ val TType.unboxed: TType
         BDouble       -> TDouble
         BBool         -> TBool
         BVoid         -> TVoid
-        else          -> this // unreachable
+        else          -> this
     }
-
-// -------------------------------------------------------------------------------------------------
-
-/**
- * Returns the unboxed primitive type corresponding to this boxed type.
- */
-val BoxedType.unboxed: PrimitiveType
-    get() = (this as TType).unboxed as PrimitiveType
 
 // -------------------------------------------------------------------------------------------------
 
@@ -222,8 +213,8 @@ fun cast_compatible (src: TType, dst: TType): Boolean
     proclaim(src as RefType)
 
     if (dst is PrimitiveType) {
-        if (src is BoxedType)
-            return prim_widening_conversion(src.unboxed, dst)
+        if (src.is_boxed)
+            return prim_widening_conversion(src.unboxed as PrimitiveType, dst)
         else
             return ref_narrowing_conversion(src, dst.boxed)
     }
