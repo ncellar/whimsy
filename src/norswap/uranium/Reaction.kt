@@ -52,7 +52,7 @@ class Reaction <N: Node> internal constructor (node: N)
      * Trigger the reaction in order to derive the supplied attributes.
      */
     val trigger get() = _trigger
-    lateinit var _trigger: () -> Unit
+    var _trigger: () -> Unit = {}
 
     // ---------------------------------------------------------------------------------------------
 

@@ -1,4 +1,5 @@
 package norswap.lang.java8.resolution
+import norswap.lang.java8.classes
 import norswap.lang.java8.java_virtual_node
 import norswap.lang.java8.scopes.BytecodeClassScope
 import norswap.lang.java8.scopes.Scope
@@ -6,21 +7,12 @@ import norswap.lang.java8.scopes.ClassScope
 import norswap.lang.java8.typing.MemberInfo
 import norswap.uranium.Attribute
 import norswap.uranium.Continue
-import norswap.uranium.Fail
 import norswap.uranium.Reaction
 import norswap.uranium.Context
 import norswap.utils.attempt
 import org.apache.bcel.classfile.ClassParser
 import java.net.URL
 import java.net.URLClassLoader
-
-// =================================================================================================
-
-// TODO
-// - consistency of chain decisions
-//      - what when new source introduces ambiguity?
-//      - always keep oldest?
-// - rationalize klass, class, class_like
 
 /**
  * ## Lexicon
@@ -45,10 +37,9 @@ object Resolver
 
     /**
      * Bogus class-like object used to represent "failures to load" in the caches.
-     * [continuation] the reaction that can provide the requested class.
      * Never escapes the resolver.
      */
-    private class Miss (val continuation: Reaction<*>): ClassScope()
+    private object Miss: ClassScope()
     {
         override val super_type           = null
         override val name           get() = throw NotImplementedError()
@@ -84,34 +75,76 @@ object Resolver
 
     // ---------------------------------------------------------------------------------------------
 
-    private val loader = PathClassLoader(urls)
+    private val loader = URLClassLoader(urls)
 
     // ---------------------------------------------------------------------------------------------
 
-    /**
-     * Register class information derived from a source file.
-     */
-    fun register_source_class (class_like: SourceClassLike)
+    fun register_class (klass: ClassScope)
     {
-        val old = class_cache.putIfAbsent(class_like.canonical_name, class_like)
-        if (old != null)
-            throw Fail(ConflictingClassDefinitions(class_like.canonical_name))
+        var old = class_cache.putIfAbsent(klass.canonical_name, klass)
+        Context.classes[klass.canonical_name] = klass
+
+        if (old != null) {
+            // TODO must handle class conflicts
+            // - javac: -Xprefer:newer (default) and -Xprefer:source
+            // - how to update everything when class is redefined
+            // > must have a reaction depending on classes node
+            // - ConflictingClassDefinitions(klass.canonical_name)
+        }
+
+        if (!klass.inner) return
+
+        val chain = klass.chain
+        old = chain_cache[chain]
+        if (old == null) return
+
+        val reactor    = Context.reactor
+        val chain_name = chain.joinToString(".")
+
+        val i1 = klass.canonical_name.indexOf('$')
+        val i2 = old  .canonical_name.indexOf('$')
+
+        if (i1 < i2) {
+            val chain_node = reactor.java_virtual_node.chains
+            chain_node[chain_name] = klass
+            chain_cache[chain] = klass
+        }
+
+        if (!old.ambiguous_chain) {
+            reactor.register_error(AmbiguousClassDefinitions(chain_name))
+            klass.ambiguous_chain = true
+            old  .ambiguous_chain = true
+        }
     }
 
     // ---------------------------------------------------------------------------------------------
 
-    private fun load_from_url (class_url: URL): ClassScope
+    /**
+     * Returns the pass to the class designated by the given canonical name using the given class
+     * loader.
+     */
+    fun find_class_path (loader: URLClassLoader, cano_name: String): URL?
+        = loader.findResource(cano_name.replace('.', '/') + ".class")
+
+    // ---------------------------------------------------------------------------------------------
+
+    private fun load_from_url (class_url: URL): ClassScope?
     {
-        val cparser = ClassParser(class_url.openStream(), class_url.toString())
-        val bclass = cparser.parse()
-        return BytecodeClassScope(bclass)
+        try {
+            val cparser = ClassParser(class_url.openStream(), class_url.toString())
+            val bclass = cparser.parse()
+            return BytecodeClassScope(bclass)
+        } catch (e: Exception) {
+            // TODO register error
+            return null
+        }
     }
 
     // ---------------------------------------------------------------------------------------------
 
     private fun load_from_classfile (cano_name: String): ClassScope?
     {
-        return loader.find_class_path(cano_name)
+        return find_class_path(loader, cano_name)
             ?. let { load_from_url(it) }
     }
 
@@ -144,6 +177,21 @@ object Resolver
 
     // ---------------------------------------------------------------------------------------------
 
+    private fun load_class_reaction (cano_name: String, name: String, scope: Scope.Node)
+    {
+        Reaction (scope) {
+            _optional = true // TODO because may not provide attribute -- keep?
+            _provided = listOf(Attribute(scope, name))
+            _trigger  = {
+                val klass = load_class(cano_name)
+                if (klass != null) scope[name] = klass
+                class_cache[cano_name] = klass ?: Miss
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------------------------------------
+
     /**
      * Input: the canonical name of a class, as well as a scope node and the name under which
      * the class should be registered within that scope.
@@ -156,24 +204,14 @@ object Resolver
     fun klass (cano_name: String, name: String, scope: Scope.Node): ClassScope?
     {
         val cached = class_cache[cano_name]
-        if (cached is Miss) return null
+        if (cached == Miss) return null
 
         if (cached != null) {
             scope[name] = cached
             return cached
         }
 
-        Reaction (scope) {
-            _optional = true // TODO because may not provide attribute -- keep?
-            _provided = listOf(Attribute(scope, name))
-            _trigger  = {
-                val klass = load_class(cano_name)
-                if (klass != null) scope[name] = klass
-                // TODO must not have parameter
-                class_cache[cano_name] = klass ?: Miss(this)
-            }
-        }
-
+        load_class_reaction(cano_name, name, scope)
         return null
     }
 
@@ -197,42 +235,6 @@ object Resolver
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * Given the canonical name of a class, returns its information from the cache, or schedules its
-     * acquisition with the reactor. If the info is not available, two cases are possible:
-     *
-     * - there hasn't been an attempt to load the class yet
-     * - previous attempts to load the class were unsuccessful
-     *
-     * In the first case, the method schedules an attempt to load the class information with
-     * the reactor, then throws [Continue].
-     *
-     * In the second case, we might still be able to get the information later, when a source
-     * file is added to the reactor, so we throw [Continue].
-     */
-//    fun klass (cano_name: String): ClassScope
-//    {
-//        val cached = class_cache[cano_name]
-//        if (cached is Miss) throw Continue(cached.continuation)  // must come from source file
-//        if (cached != null) return cached
-//
-//        val reactor    = Context.reactor
-//        val klass_node = reactor.java_virtual_node.classes
-//        val required   = Attribute(klass_node, cano_name)
-//
-//        // schedule attempt to load class
-//        throw Continue(Reaction(klass_node) {
-//            _provided = listOf(required)
-//            _trigger  = {
-//                val klass = load_class(cano_name)
-//                if (klass != null) required += klass
-//                class_cache[cano_name] = klass ?: Miss(this)
-//            }
-//        })
-//    }
-
-    // ---------------------------------------------------------------------------------------------
-
-    /**
      * Loads the named class eagerly (from the cache or by reading class files).
      * This function may block while class files are being read.
      * The cache may be updated as a result.
@@ -243,36 +245,11 @@ object Resolver
     fun eagerly (cano_name: String): ClassScope
     {
         val cached = class_cache[cano_name]
-        if (cached != null) return cached
+        if (cached != null && cached != Miss) return cached
 
         val klass = load_class(cano_name) ?: throw Error("could not load class: $cano_name")
-        class_cache[cano_name] = klass
+        register_class(klass)
         return klass
-    }
-
-    // ---------------------------------------------------------------------------------------------
-
-    private fun extract_chain_class (cano_names: List<String>, class_likes: List<ClassScope>)
-            : ClassScope?
-        = when (class_likes.size) {
-            0 -> null
-            1 -> class_likes[0]
-            else -> {
-                val full_name = cano_names[0].replace('$', '.')
-                throw Fail(AmbiguousClassDefinitions(full_name))
-            }
-        }
-
-    // ---------------------------------------------------------------------------------------------
-
-    /**
-     * Given a full class chain, returns the class info, without reading or writing from
-     * any cache.
-     */
-    private fun load_full_chain (cano_names: List<String>): ClassScope?
-    {
-        val class_likes = cano_names.mapNotNull(this::load_class)
-        return extract_chain_class(cano_names, class_likes)
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -292,85 +269,64 @@ object Resolver
 
     // ---------------------------------------------------------------------------------------------
 
-    /**
-     * Given a full class chain (a full top-level class name, followed by an optional sequence of
-     * nested class names), returns the class info.
-     *
-     * If the info is not available from the chain cache, two cases are possible:
-     *
-     * - there hasn't been an attempt to load the chain yet
-     * - previous attempts to load the chain were unsuccessful
-     *
-     * In the first case, the method schedules an attempt to load the chain information with
-     * the reactor, then throws [Continue].
-     *
-     * In the second case, we might still be able to get the information later, when a source
-     * file is added to the reactor, so we throw [Continue].
-     */
-    fun full_chain (chain: List<String>): ClassScope
+    // fully qualified chains
+    fun full_chain (chain: List<String>): ClassScope?
     {
         val cached = chain_cache[chain]
-        if (cached is Miss) throw Continue(cached.continuation)
+        if (cached == Miss) return null
         if (cached != null) return cached
 
         val cano_names = cano_names(chain)
+        val chain_name = cano_names[0] // no static classes
+        val reactor    = Context.reactor
+        val class_node = reactor.java_virtual_node.classes
+        val chain_node = reactor.java_virtual_node.classes
+        val chain_attr = Attribute(chain_node, chain_name)
 
-        // lookup the canonical names in the cache
-        val class_likes = cano_names.mapNotNull(class_cache::get)
-        val klass = extract_chain_class(cano_names, class_likes)
-        if (klass != null) {
-            chain_cache[chain] = klass
-            return klass
+        val required = cano_names.map {
+            class_cache[it] ?: load_class_reaction(it, it, class_node)
+            Attribute(class_node, it)
         }
 
-        val reactor    = Context.reactor
-        val chain_node = reactor.java_virtual_node.chains
-        val required   = Attribute(chain_node, chain.joinToString("."))
-
-        // schedule attempt to load class
-        throw Continue(Reaction(chain_node) {
-            _provided = listOf(required)
+        Reaction (chain_node) {
+            _consumed = required
+            _provided = listOf(chain_attr)
             _trigger  = {
-                val klass1 = load_full_chain(cano_names)
-                chain_cache[chain] = klass1 ?: Miss(this)
-                if (klass1 != null) {
-                    required += klass1
-                    class_cache[klass1.canonical_name] = klass1
+                val available = consumed.filter { it.get() != Attribute.None }
+                val klass = available.lastOrNull()?.get() as ClassScope?
+
+                if (available.size > 1) {
+                    klass?.ambiguous_chain = true
+                    reactor.register_error(AmbiguousClassDefinitions(chain_name))
                 }
+
+                chain_cache[chain]      = klass ?: Miss
+                chain_node[chain_name]  = klass ?: Attribute.None
             }
-        })
+        }
+
+        // Redo the current reaction when the chain becomes available,
+        // or when its value changes (for a more specific one).
+        Reaction (chain_node) {
+            _consumed = listOf(chain_attr)
+            _pushed = Context.reaction
+        }
+
+        return null
+
+        // TODO
+        // - all raw node access must check for None
     }
 
     // ---------------------------------------------------------------------------------------------
 
-    /**
-     * Given a class chain, returns the class info.
-     *
-     * The lookup algorithm will first try to resolve the first component of the chain as simple
-     * class name, and if that works every subsequent component to a nested class.
-     *
-     * TODO test
-     *
-     * TODO edit below (or ref full_chain)
-     *
-     * If the info is not available from the chain cache, two cases are possible:
-     *
-     * - there hasn't been an attempt to load the chain yet
-     * - previous attempts to load the chain were unsuccessful
-     *
-     * In the first case, the method schedules an attempt to load the chain information with
-     * the reactor, then throws [Continue].
-     *
-     * In the second case, we might still be able to get the information later, when a source
-     * file is added to the reactor, so we throw [Continue].
-     */
-    fun klass_chain (scope: Scope, chain: List<String>): ClassScope
+    fun klass_chain (scope: Scope, chain: List<String>): ClassScope?
     {
         // TODO
         // - will hang on every component to know whether it exists or not?
         // - no: will return null if not present
         // - problem: need to load static classes at some point...
-            // - override lookup function in binary thingy to throw a continue
+        // - override lookup function in binary thingy to throw a continue
 
         var cur_scope: Scope? = scope
         var last = 0
@@ -402,7 +358,7 @@ object Resolver
         if (cont != null)
             throw cont
         else
-            throw Fail(ClassNotFoundScopeError())
+            throw Error() //Fail(ClassNotFoundScopeError())
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -412,17 +368,7 @@ object Resolver
         val klass = klass(cano_name)
         val members = klass?.member(member) ?: emptyList() // TODO hackfix
         if (members.isEmpty())
-            throw Fail(MemberNotFoundScopeError())
+            throw Error() //Fail(MemberNotFoundScopeError())
         return members
     }
 }
-
-// =================================================================================================
-
-class PathClassLoader (urls: Array<URL>): URLClassLoader(urls)
-{
-    fun find_class_path (full_name: String): URL?
-        = findResource(full_name.replace('.', '/') + ".class")
-}
-
-// =================================================================================================
