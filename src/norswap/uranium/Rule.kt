@@ -59,8 +59,8 @@ abstract class Rule <N: Node>: NodeVisitor<N>()
     /**
      * An utility function for reporting errors using an [ErrorConstructor].
      */
-    inline fun Reaction<N>.report (mk: ErrorConstructor): Unit
-        = reactor.register_error(mk(this, node), this)
+    fun Reaction<N>.report (error: ReactorError): Unit
+        = reactor.register_error(error, this)
 
     // ---------------------------------------------------------------------------------------------
 }

@@ -80,7 +80,7 @@ object NotRule: UnaryTypingRule<Not>()
         if (op_type === TBool)
             node.typea = TBool
         else
-            report(::NotTypeError)
+            report(NotTypeError(node))
     }
 }
 
@@ -97,7 +97,7 @@ object ComplementRule: UnaryTypingRule<Complement>()
         if (op_type is IntegerType)
             node.typea = unary_promotion(op_type)
         else
-            report(::ComplementTypeError)
+            report(ComplementTypeError(node))
     }
 }
 
@@ -116,7 +116,7 @@ object UnaryArithRule: UnaryTypingRule<UnaryOp>()
         if (op_type is NumericType)
             node.typea = unary_promotion(op_type)
         else
-            report(::UnaryArithTypeError)
+            report(UnaryArithTypeError(node))
     }
 }
 
@@ -142,7 +142,7 @@ object BinaryArithRule: BinaryOpRule()
         if (lt is NumericType && rt is NumericType)
             node.typea = binary_promotion(lt, rt)
         else
-            report(::BinaryArithTypeError)
+            report(BinaryArithTypeError(node))
     }
 }
 
@@ -163,7 +163,7 @@ object ShiftRule: BinaryOpRule()
         if (lt is IntegerType && rt is IntegerType)
             node.typea = unary_promotion(lt)
         else
-            report(::ShiftTypeError)
+            report(ShiftTypeError(node))
     }
 }
 
@@ -183,7 +183,7 @@ object OrderingRule: BinaryOpRule()
         val rt = node.right.typea.unboxed
 
         if (lt !is NumericType || rt !is NumericType)
-            report(::OrderingTypeError)
+            report(OrderingTypeError(node))
         else
             node.typea = TBool
     }
@@ -205,16 +205,16 @@ object InstanceofRule: TypingRule<Instanceof>()
         val type    = node.type.resolved
 
         if (op_type !is RefType)
-            return report(::InstanceofValueError)
+            return report(InstanceofValueError(node))
         if (type !is RefType)
-            return report(::InstanceofTypeError)
+            return report(InstanceofTypeError(node))
         if (!type.reifiable())
-            return report(::InstanceofReifiableError)
+            return report(InstanceofReifiableError(node))
 
         if (cast_compatible(op_type, type))
             node.typea = TBool
         else
-            report(::InstanceofCompatError)
+            report(InstanceofCompatError(node))
     }
 }
 
@@ -240,15 +240,15 @@ object EqualRule: BinaryOpRule()
             return run { node.typea = TBool }
 
         if (ltu is PrimitiveType && rtu is PrimitiveType)
-            return report(::EqualNumBoolError)
+            return report(EqualNumBoolError(node))
 
         if (lt is PrimitiveType || rt is PrimitiveType)
-            return report(::EqualPrimRefError)
+            return report(EqualPrimRefError(node))
 
         if (cast_compatible(lt, rt))
             node.typea = TBool
         else
-            report(::EqualCompatError)
+            report(EqualCompatError(node))
     }
 }
 
@@ -270,10 +270,10 @@ object BitwiseRule: BinaryOpRule()
             return run { node.typea = TBool }
 
         if (lt === TBool || rt === TBool)
-            return report(::BitwiseMixedError)
+            return report(BitwiseMixedError(node))
 
         if (lt !is IntegerType || rt !is IntegerType)
-            return report(::BitwiseRefError)
+            return report(BitwiseRefError(node))
 
         node.typea = binary_promotion(lt, rt)
     }
@@ -293,7 +293,7 @@ object LogicalRule: BinaryOpRule()
         val rt = node.right.typea.unboxed
 
         if (lt !== TBool || rt !== TBool)
-            report(::LogicalTypeError)
+            report(LogicalTypeError(node))
         else
             node.typea = TBool
     }

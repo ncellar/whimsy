@@ -116,7 +116,8 @@ class ImportRule (scope: ScopeBuilder): ScopeRule<Import>(scope)
         if (node.static && node.wildcard)
         {
             val klass = Resolver.full_chain(node.name)
-            klass.members().forEach { sc.put_member(it) }
+            if (klass != null) // TODO check
+                klass.members().forEach { sc.put_member(it) }
         }
         else if (node.static)
         {
@@ -127,7 +128,8 @@ class ImportRule (scope: ScopeBuilder): ScopeRule<Import>(scope)
         else if (node.wildcard)
         {
             val klass = Resolver.full_chain(node.name)
-            klass.members().forEach { sc.put_member(it) }
+            if (klass != null) // TODO check
+                klass.members().forEach { sc.put_member(it) }
         }
         else
         {
@@ -161,11 +163,12 @@ class SuperclassRule (scope: ScopeBuilder): ScopeRule<TypeDecl>(scope)
 
         val super_type = node.extends[0]
         if (super_type !is ClassType)
-            return run { report(::ExtendingNonClass) }
+            return run { report(ExtendingNonClass(node)) }
 
         val super_name = super_type.parts.map { it.name }
         val superclass = Resolver.klass_chain(scope.current, super_name)
-        node["super_type"] = superclass
+        if (superclass != null) // TODO check
+            node["super_type"] = superclass
     }
 }
 
@@ -200,7 +203,9 @@ class ClassTypeRule (scope: ScopeBuilder): ResolutionRule<ClassType>(scope)
     {
         val name = node.parts.map { it.name }
         val klass = Resolver.klass_chain(sc, name)
-        node["resolved"] = klass
+
+        if (klass != null) // TODO check
+            node["resolved"] = klass
     }
 }
 

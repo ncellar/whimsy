@@ -3,13 +3,6 @@ import norswap.uranium.ReactorErrorTag.*
 
 // =================================================================================================
 
-/**
- * A function that creates an error from the reaction and node where the error occurred.
- */
-typealias ErrorConstructor = (Reaction<*>, Node) -> ReactorError
-
-// =================================================================================================
-
 enum class ReactorErrorTag
 {
     ReactionPending,
