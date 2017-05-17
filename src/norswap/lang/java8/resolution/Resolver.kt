@@ -42,6 +42,7 @@ object Resolver
     private object Miss: ClassScope()
     {
         override val super_type           = null
+        override val timestamp            = 0L
         override val name           get() = throw NotImplementedError()
         override val canonical_name get() = throw NotImplementedError()
         override val kind           get() = throw NotImplementedError()

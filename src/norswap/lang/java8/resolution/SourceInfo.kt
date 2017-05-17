@@ -23,6 +23,8 @@ class SourceClassLike (override val canonical_name: String, val decl: TypeDecl):
 {
     override val name = decl.name
 
+    override val timestamp = decl.input.timestamp
+
     override val kind: TypeDeclKind
         get() = decl.kind
 

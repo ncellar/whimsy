@@ -30,6 +30,8 @@ open class ReflectionClassLike (val klass: Class<*>): ClassScope()
 {
     override val name = klass.simpleName!!
 
+    override val timestamp = 0L
+
     override val canonical_name = klass.canonicalName!!
 
     override val kind = when

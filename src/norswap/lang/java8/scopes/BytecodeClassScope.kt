@@ -12,8 +12,9 @@ import org.apache.bcel.Const
 import org.apache.bcel.classfile.ConstantUtf8
 import org.apache.bcel.classfile.InnerClass
 import org.apache.bcel.classfile.JavaClass
+import java.io.File
 
-open class BytecodeClassScope(val bclass: JavaClass): ClassScope()
+open class BytecodeClassScope (val bclass: JavaClass): ClassScope()
 {
     // ---------------------------------------------------------------------------------------------
     // MemberInfo
@@ -28,6 +29,10 @@ open class BytecodeClassScope(val bclass: JavaClass): ClassScope()
 
     override val canonical_name
         = bclass.className!!
+
+    // ---------------------------------------------------------------------------------------------
+
+    override val timestamp = File(bclass.sourceFileName).lastModified()
 
     // ---------------------------------------------------------------------------------------------
 

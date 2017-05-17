@@ -11,6 +11,10 @@ abstract class ClassScope: InstantiableType, Scope, MemberInfo
 
     // ---------------------------------------------------------------------------------------------
 
+    abstract val timestamp: Long
+
+    // ---------------------------------------------------------------------------------------------
+
     open val chain: List<String>
         get() = canonical_name.replace('$', '.').split('.')
 
