@@ -22,15 +22,4 @@ class ScopeBuilder
         current = scope_stack.pop()
         return out
     }
-
-    fun full_name (klass: String): String
-    {
-        // TODO
-        var name: String?
-        for (scope in scope_stack) {
-            name = scope.full_name(klass)
-            if (name != null) return name
-        }
-        throw Error("Could not find full name of $klass")
-    }
 }

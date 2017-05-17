@@ -180,7 +180,7 @@ class TypeDeclRule (scope: ScopeBuilder): ScopeContributor<TypeDecl>(scope)
     {
         if (!begin) scope.pop()
 
-        val klass = SourceClassLike(scope.full_name(node.name), node)
+        val klass = SourceClassLike(scope.current.full_name(node.name), node)
         scope.current.put_class_like(klass)
         scope.push(klass)
     }
