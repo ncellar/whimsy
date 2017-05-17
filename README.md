@@ -2,6 +2,8 @@
 
 # The Whimsy Compiler Framework
 
+**THIS BRANCH (URANIUM) IS SUSCEPTIBLE TO HISTORY REWRITES, USE AT OWN RISK**
+
 [![build](https://api.travis-ci.org/norswap/whimsy.svg?branch=master)][travis]
 [![jitpack](https://jitpack.io/v/norswap/whimsy.svg)][jitpack]
 
