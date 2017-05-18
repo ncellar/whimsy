@@ -80,6 +80,13 @@ class Reactor
 
     // ---------------------------------------------------------------------------------------------
 
+    /**
+     * User-controlled field used to attach additional information to the reactor.
+     */
+    var attachment: Any = Any()
+
+    // ---------------------------------------------------------------------------------------------
+
     fun add_visitor (visitor: NodeVisitor<*>)
     {
         visitor.reactor = this
