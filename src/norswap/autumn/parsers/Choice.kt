@@ -70,7 +70,7 @@ class Longest (val g: Grammar, val ps: Array<Parser>): Parser
  * `longest(a, b)` is syntactic sugar for `Longest(this, arrayOf(a, b)`.
  */
 @Suppress("UNCHECKED_CAST")
-fun Grammar.longest(vararg parsers: Parser): Parser
+fun Grammar.longest (vararg parsers: Parser): Parser
     = Longest(this, parsers as Array<Parser>)
 
 // -------------------------------------------------------------------------------------------------

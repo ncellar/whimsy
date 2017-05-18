@@ -33,7 +33,7 @@ class Angles (val p: Parser): Parser()
 /**
  * Matches an empty set of angles brackets, potentially separated and/or followed by whitespace.
  */
-class AnglesEmpty(): Parser()
+class AnglesEmpty: Parser()
 {
     override fun invoke() = grammar.angles()
 }
@@ -53,7 +53,7 @@ class Squares (val p: Parser): Parser()
 /**
  * Matches an empty set of square brackets, potentially separated and/or followed by whitespace.
  */
-class SquaresEmpty(): Parser()
+class SquaresEmpty: Parser()
 {
     override fun invoke() = grammar.squares()
 }
@@ -73,7 +73,7 @@ class Curlies (val p: Parser): Parser()
 /**
  * Matches an empty set of curly brackets, potentially separated and/or followed by whitespace.
  */
-class CurliesEmpty(): Parser()
+class CurliesEmpty: Parser()
 {
     override fun invoke() = grammar.curlies()
 }
@@ -93,7 +93,7 @@ class Parens (val p: Parser): Parser()
 /**
  * Matches an empty set of parens, potentially separated and/or followed by whitespace.
  */
-class ParensEmpty(): Parser()
+class ParensEmpty: Parser()
 {
     override fun invoke() = grammar.parens()
 }

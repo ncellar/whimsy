@@ -25,7 +25,7 @@ class CharPred (val pred: (Char) -> Boolean): Parser()
  * Matches any character.
  * Only fails when the end of the input (represented by the null byte) is reached.
  */
-class CharAny(): Parser()
+class CharAny: Parser()
 {
     override fun invoke() = grammar.char_any()
 }
@@ -70,9 +70,14 @@ class WordString (val str: String): Parser()
     override fun invoke() = grammar.word(str)
 }
 
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * Matches the same thing as [p], and any trailing whitespace (as defined by [Grammar.whitespace]).
+ */
 class WordParser (val p: Parser): Parser()
 {
-    override fun invoke() = grammar.word { p() }
+    override fun invoke() = grammar.word(p)
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -80,7 +85,7 @@ class WordParser (val p: Parser): Parser()
 /**
  * Matches an alphabetic character (the ranges a-z and A-Z).
  */
-class Alpha(): Parser()
+class Alpha: Parser()
 {
     override fun invoke() = grammar.alpha()
 }
@@ -90,7 +95,7 @@ class Alpha(): Parser()
 /**
  * Matches an alphanumeric character (the ranges a-z, A-Z and 0-9).
  */
-class Alphanum(): Parser()
+class Alphanum: Parser()
 {
     override fun invoke() = grammar.alphanum()
 }
@@ -100,7 +105,7 @@ class Alphanum(): Parser()
 /**
  * Matches a digit (the range 0-9).
  */
-class Digit(): Parser()
+class Digit: Parser()
 {
     override fun invoke() = grammar.digit()
 }
@@ -110,7 +115,7 @@ class Digit(): Parser()
 /**
  * Matches an hexadecimal digit (the ranges a-f, A-F and 0-9).
  */
-class HexDigit(): Parser()
+class HexDigit: Parser()
 {
     override fun invoke() = grammar.hex_digit()
 }
@@ -120,7 +125,7 @@ class HexDigit(): Parser()
 /**
  * Matches an octal digit (the range 0-7).
  */
-class OctalDigit(): Parser()
+class OctalDigit: Parser()
 {
     override fun invoke() = grammar.octal_digit()
 }
@@ -130,7 +135,7 @@ class OctalDigit(): Parser()
 /**
  * Matches a whitespace character, as defined by [Char.isWhitespace].
  */
-class SpaceChar(): Parser()
+class SpaceChar: Parser()
 {
     override fun invoke() = grammar.space_char()
 }
@@ -140,7 +145,7 @@ class SpaceChar(): Parser()
 /**
  * Matches a java identifier (as defined by JLS 3.8).
  */
-class JavaIden(): Parser()
+class JavaIden: Parser()
 {
     override fun invoke() = grammar.java_iden()
 }
@@ -151,7 +156,7 @@ class JavaIden(): Parser()
  * Matches a java identifier that consists (as defined by JLS 3.8) that consists only of
  * ASCII characters.
  */
-class AsciiJavaIden(): Parser()
+class AsciiJavaIden: Parser()
 {
     override fun invoke() = grammar.ascii_java_iden()
 }

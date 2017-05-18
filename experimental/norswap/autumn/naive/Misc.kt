@@ -1,5 +1,4 @@
 package norswap.autumn.naive
-
 import norswap.autumn.Grammar
 import norswap.autumn.parsers.*
 
@@ -110,7 +109,7 @@ class CatchContain (val p: Parser): Parser()
  */
 class Inner (val gather: Parser, val refine: (String) -> Boolean): Parser()
 {
-    override fun invoke() = grammar.inner({ gather() }, refine)
+    override fun invoke() = grammar.inner(gather, refine)
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -126,14 +125,12 @@ class Inner (val gather: Parser, val refine: (String) -> Boolean): Parser()
  */
 class UntilInner (val terminator: Parser, val refine: (String) -> Boolean): Parser()
 {
-    override fun invoke() = grammar.until_inner({ terminator() }, refine )
+    override fun invoke() = grammar.until_inner(terminator, refine )
 }
 
 // -------------------------------------------------------------------------------------------------
 
 /*
- * (Syntactic sugar for [SubGrammar])
- *
  * A parser that matches the same thing as parsing [sub_grammar] with the remainder of the input
  * would. If successful, the [completion] function is called, passing it [sub_grammar].
  *
@@ -141,28 +138,19 @@ class UntilInner (val terminator: Parser, val refine: (String) -> Boolean): Pars
  * sub-grammar on top on the value stack of the current grammar.
  */
 class SubGrammar (
+        g: Grammar,
         val sub_grammar: Grammar,
-        val completion: Grammar.(Grammar) -> Unit = { stack.push(it.stack[0]) })
+        completion: Grammar.(Grammar) -> Unit = { stack.push(it.stack[0]) })
         : Parser()
 {
-    override fun invoke() = grammar.sub_grammar(sub_grammar, completion).invoke()
+    init { grammar = g }
+    val delegate = g.sub_grammar(sub_grammar, completion)
+    override fun invoke() = delegate()
 }
 
 // -------------------------------------------------------------------------------------------------
 
-/*
- * A version of [sub_grammar] that can be used in conjunction with [inner] or [until_inner]:
- * it runs the sub-grammar on the matched text.
- */
-class SubGrammarInner (
-        val sub_grammar: Grammar,
-        val completion: Grammar.(Grammar) -> Unit = { stack.push(it.stack[0]) })
-        : Parser()
-{
-    override fun invoke(): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-    //override fun invoke() = grammar.sub_grammar_inner(sub_grammar, completion).invoke("")
-}
+// NOTE: We eschew porting `sub_grammar_inner` for now.
+// The problem is that it is not a parser subclass, so we can't track its sub-parsers easily.
 
 // -------------------------------------------------------------------------------------------------

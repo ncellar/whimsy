@@ -1,5 +1,5 @@
 package norswap.autumn.naive
-
+import norswap.autumn.Grammar
 import norswap.autumn.parsers.AssocLeft
 import norswap.autumn.parsers.assoc_left
 
@@ -7,8 +7,7 @@ import norswap.autumn.parsers.assoc_left
  * A parser that matches applications of a set of left-associative binary operators and
  * postfix operators.
  *
- * This parser must be instantiated through the [assoc_left] function, which
- * takes an initialization function as parameter.
+ * This parser takes an initialization function as parameter.
  *
  * Within that function, you must specify how to parse the left-hand side and right-hand side of
  * these operators by assigning the [left] and [right] properties. If both sides are recognized by
@@ -25,16 +24,9 @@ import norswap.autumn.parsers.assoc_left
  * a language. This can be controlled through the [strict] property (should be set in the
  * initialization function).
  */
-//class AssocLeft internal constructor (val g: Grammar): Parser
-
-// =================================================================================================
-
-/**
- * Constructor for [AssocLeft]. See the class documentation for details, notably
- * on the content of [init].
- */
-class AssocLeft (val init: AssocLeft.() -> Unit): Parser()
+class AssocLeft (g: Grammar, val init: AssocLeft.() -> Unit): Parser()
 {
-    val assoc_left = grammar.assoc_left(init)
-    override fun invoke() = assoc_left.invoke()
+    init { grammar = g }
+    val assoc_left = g.assoc_left(init)
+    override fun invoke() = assoc_left()
 }

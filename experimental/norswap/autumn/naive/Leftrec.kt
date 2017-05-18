@@ -1,10 +1,7 @@
 package norswap.autumn.naive
-
 import norswap.autumn.Grammar
 import norswap.autumn.parsers.leftrec
-import norswap.autumn.undoable.UndoList
-
-// -------------------------------------------------------------------------------------------------
+import norswap.utils.cast
 
 /**
  * Creates a left-recursive parser from the parser [p].
@@ -27,10 +24,9 @@ import norswap.autumn.undoable.UndoList
  * 4. This process (3) repeats itself until either [p] fails, or the result's input position
  * stops growing.
  */
-class Leftrec (val p: Grammar.(self: Parser) -> Boolean): Parser()
+class Leftrec (g: Grammar, val p: Grammar.(self: Parser) -> Boolean): Parser()
 {
-    // IS THIS CORRECT ???
-    override fun invoke() = grammar.leftrec { p(this@Leftrec)}.invoke()
+    init { grammar = g }
+    val leftrec = g.leftrec(p.cast()) // okay because all parsers will be of the naive variety
+    override fun invoke() = leftrec()
 }
-
-// -------------------------------------------------------------------------------------------------
