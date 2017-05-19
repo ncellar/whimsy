@@ -1,4 +1,5 @@
 package norswap.lang.java8.resolution
+import norswap.lang.java8.Java8Config
 import norswap.lang.java8.classes
 import norswap.lang.java8.java_virtual_node
 import norswap.lang.java8.scopes.BytecodeClassScope
@@ -80,24 +81,62 @@ object Resolver
 
     // ---------------------------------------------------------------------------------------------
 
-    fun register_class (klass: ClassScope)
+    /**
+     * Called by [register_class] when the same class is defined by two different sources.
+     */
+    private fun handle_conflict (old: ClassScope, new: ClassScope)
     {
-        var old = class_cache.putIfAbsent(klass.canonical_name, klass)
-        Context.classes[klass.canonical_name] = klass
+        val cano_name = new.canonical_name
+        val reactor   = Context.reactor
+        val conf      = reactor.attachment as Java8Config
 
-        if (old != null) {
-            // TODO must handle class conflicts
-            // - javac: -Xprefer:newer (default) and -Xprefer:source
-            // - how to update everything when class is redefined
-            // > must have a reaction depending on classes node
-            // - ConflictingClassDefinitions(klass.canonical_name)
+        // In case of true conflict, always keep the old class.
+        when (old) {
+            is SourceClassLike ->
+                when (new) {
+                    is SourceClassLike ->
+                        reactor.register_error(ConflictingSourceClasses(cano_name))
+
+                    is BytecodeClassScope ->
+                        if (conf.prefer_newer && new.timestamp > old.timestamp) {
+                            class_cache.put(cano_name, new)
+                            reactor.java_virtual_node.classes[cano_name] = new
+                        }
+
+                    is ReflectionClassLike ->
+                        reactor.register_error(ReflectiveClassConflict(cano_name))
+                }
+
+            is BytecodeClassScope ->
+                when (new) {
+                    is SourceClassLike ->
+                        if (conf.prefer_source || new.timestamp > old.timestamp) {
+                            class_cache.put(cano_name, new)
+                            reactor.java_virtual_node.classes[cano_name] = new
+                        }
+
+                    is BytecodeClassScope ->
+                        reactor.register_error(ConflictingBytecodeClasses(cano_name))
+
+                    is ReflectionClassLike ->
+                        reactor.register_error(ReflectiveClassConflict(cano_name))
+                }
+
+            is ReflectionClassLike ->
+                reactor.register_error(ReflectiveClassConflict(cano_name))
         }
+    }
 
-        if (!klass.inner) return
+    // ---------------------------------------------------------------------------------------------
 
+    /**
+     * Called by [register_class] for inner-class specific handling, as these classes
+     * may cause class chain ambiguities.
+     */
+    private fun register_class_chain (klass: ClassScope)
+    {
         val chain = klass.chain
-        old = chain_cache[chain]
-        if (old == null) return
+        val old = chain_cache[chain] ?: return
 
         val reactor    = Context.reactor
         val chain_name = chain.joinToString(".")
@@ -106,16 +145,36 @@ object Resolver
         val i2 = old  .canonical_name.indexOf('$')
 
         if (i1 < i2) {
+            // The new class is more prioritary than the old class chain resolution.
             val chain_node = reactor.java_virtual_node.chains
             chain_node[chain_name] = klass
             chain_cache[chain] = klass
         }
 
+        // While these kinds of ambiguities do not seem to be explicitly forbidden by the JLS
+        // or by javac, they are extremely bad practice, so we register an error.
         if (!old.ambiguous_chain) {
             reactor.register_error(AmbiguousClassDefinitions(chain_name))
             klass.ambiguous_chain = true
             old  .ambiguous_chain = true
         }
+    }
+
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * When a new class is loaded, no matter the source, this method should be called
+     * to register it with the resolver and perform the appropriate conflict checks.
+     */
+    fun register_class (klass: ClassScope)
+    {
+        val cano_name = klass.canonical_name
+        val old = class_cache.putIfAbsent(cano_name, klass)
+
+        if (old == null) Context.classes[cano_name] = klass
+        else handle_conflict(old, klass)
+
+        if (klass.inner) register_class_chain(klass)
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -136,7 +195,7 @@ object Resolver
             val bclass = cparser.parse()
             return BytecodeClassScope(bclass)
         } catch (e: Exception) {
-            // TODO register error
+            Context.reactor.register_error(CannotLoadClassFile(class_url))
             return null
         }
     }
