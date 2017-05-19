@@ -93,7 +93,7 @@ class Reactor
         visitor.domain
             ?. forEach { visitors.append(it, visitor) }
             ?: nth_superclass_targ(visitor, 1)
-                ?. let_as <Class<out Node>, Unit> { visitors.append(it, visitor) }
+                ?. when_is { it: Class<out Node> -> visitors.append(it, visitor) }
                 ?: throw Error("No domain specified.")
     }
 
@@ -104,7 +104,7 @@ class Reactor
         visitor.domain
             ?. forEach { visitors.remove(it, visitor) }
             ?: nth_superclass_targ(visitor, 1)
-                ?. let_as <Class<out Node>, Unit> { visitors.remove(it, visitor) }
+                ?. when_is { it: Class<out Node> -> visitors.remove(it, visitor) }
                 ?: throw Error("No domain specified.")
     }
 

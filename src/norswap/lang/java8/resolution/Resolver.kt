@@ -1,4 +1,5 @@
 package norswap.lang.java8.resolution
+import norswap.lang.java8.JavaVirtualNode
 import norswap.lang.java8.Java8Config
 import norswap.lang.java8.classes
 import norswap.lang.java8.java_virtual_node
@@ -11,6 +12,7 @@ import norswap.uranium.Continue
 import norswap.uranium.Reaction
 import norswap.uranium.Context
 import norswap.utils.attempt
+import norswap.utils.rangeTo
 import org.apache.bcel.classfile.ClassParser
 import java.net.URL
 import java.net.URLClassLoader
@@ -82,15 +84,36 @@ object Resolver
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * Called by [register_class] when the same class is defined by two different sources.
+     * When a new class is loaded, no matter the source, this method should be called
+     * to register it with the resolver and perform the appropriate conflict checks.
      */
-    private fun handle_conflict (old: ClassScope, new: ClassScope)
+    fun register_class (klass: ClassScope): Boolean
+    {
+        var success = true
+        val cano_name = klass.canonical_name
+        val old = class_cache.putIfAbsent(cano_name, klass)
+
+        if (old == null) Context.classes[cano_name] = klass
+        else success = handle_conflict(old, klass)
+
+        if (klass.inner) register_class_chain(klass)
+        return success
+    }
+
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * Called by [register_class] when the same class is defined by two different sources.
+     *
+     * Returns true iff the new class was registered as a result of the resolution.
+     */
+    private fun handle_conflict (old: ClassScope, new: ClassScope): Boolean
     {
         val cano_name = new.canonical_name
         val reactor   = Context.reactor
         val conf      = reactor.attachment as Java8Config
 
-        // In case of true conflict, always keep the old class.
+        // In case of unhandled conflict, always keep the old class.
         when (old) {
             is SourceClassLike ->
                 when (new) {
@@ -101,6 +124,7 @@ object Resolver
                         if (conf.prefer_newer && new.timestamp > old.timestamp) {
                             class_cache.put(cano_name, new)
                             reactor.java_virtual_node.classes[cano_name] = new
+                            return true
                         }
 
                     is ReflectionClassLike ->
@@ -113,6 +137,7 @@ object Resolver
                         if (conf.prefer_source || new.timestamp > old.timestamp) {
                             class_cache.put(cano_name, new)
                             reactor.java_virtual_node.classes[cano_name] = new
+                            return true
                         }
 
                     is BytecodeClassScope ->
@@ -125,6 +150,8 @@ object Resolver
             is ReflectionClassLike ->
                 reactor.register_error(ReflectiveClassConflict(cano_name))
         }
+
+        return false
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -132,6 +159,8 @@ object Resolver
     /**
      * Called by [register_class] for inner-class specific handling, as these classes
      * may cause class chain ambiguities.
+     *
+     * Returns true iff the new class was registered (there was no unsolvable conflict).
      */
     private fun register_class_chain (klass: ClassScope)
     {
@@ -163,23 +192,6 @@ object Resolver
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * When a new class is loaded, no matter the source, this method should be called
-     * to register it with the resolver and perform the appropriate conflict checks.
-     */
-    fun register_class (klass: ClassScope)
-    {
-        val cano_name = klass.canonical_name
-        val old = class_cache.putIfAbsent(cano_name, klass)
-
-        if (old == null) Context.classes[cano_name] = klass
-        else handle_conflict(old, klass)
-
-        if (klass.inner) register_class_chain(klass)
-    }
-
-    // ---------------------------------------------------------------------------------------------
-
-    /**
      * Returns the pass to the class designated by the given canonical name using the given class
      * loader.
      */
@@ -195,6 +207,7 @@ object Resolver
             val bclass = cparser.parse()
             return BytecodeClassScope(bclass)
         } catch (e: Exception) {
+            // The class was found, but we cannot load it.
             Context.reactor.register_error(CannotLoadClassFile(class_url))
             return null
         }
@@ -218,10 +231,9 @@ object Resolver
      */
     private fun load_reflectively (cano_name: String): ClassScope?
     {
-        if (cano_name.startsWith("java.") || cano_name.startsWith("javax."))
-            return attempt { syscl.loadClass(cano_name) } ?. let(::ReflectionClassLike)
-        else
-            return null
+        return (cano_name.startsWith("java.") || cano_name.startsWith("javax.")) .. {
+            attempt { syscl.loadClass(cano_name) } ?. let(::ReflectionClassLike)
+        }
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -237,15 +249,21 @@ object Resolver
 
     // ---------------------------------------------------------------------------------------------
 
+    /**
+     * Registers a reaction that will attempt loading the class will the given canonical name,
+     * and register inside [scope] with the given [name].
+     */
     private fun load_class_reaction (cano_name: String, name: String, scope: Scope.Node)
     {
         Reaction (scope) {
-            _optional = true // TODO because may not provide attribute -- keep?
+            _optional = true
             _provided = listOf(Attribute(scope, name))
             _trigger  = {
                 val klass = load_class(cano_name)
-                if (klass != null) scope[name] = klass
-                class_cache[cano_name] = klass ?: Miss
+                if (klass != null)
+                    register_class(klass) .. { scope[name] = klass }
+                else
+                    class_cache[cano_name] = Miss
             }
         }
     }
@@ -253,6 +271,8 @@ object Resolver
     // ---------------------------------------------------------------------------------------------
 
     /**
+     * Attempts to load a class given its canonical name.
+     *
      * Input: the canonical name of a class, as well as a scope node and the name under which
      * the class should be registered within that scope.
      *
@@ -277,6 +297,9 @@ object Resolver
 
     // ---------------------------------------------------------------------------------------------
 
+    /**
+     * Same as  the 3-arg [klass], but automatically derives the simple name from the canonical name.
+     */
     fun klass (cano_name: String, scope: Scope.Node): ClassScope?
     {
         return klass(cano_name, cano_to_simple_name(cano_name), scope)
@@ -284,6 +307,10 @@ object Resolver
 
     // ---------------------------------------------------------------------------------------------
 
+    /**
+     * Same as the 3-arg [klass], using [JavaVirtualNode.classes] as node and automatically
+     * deriving the simple name from the canonical name.
+     */
     fun klass (cano_name: String): ClassScope?
     {
         val reactor    = Context.reactor
@@ -431,4 +458,6 @@ object Resolver
             throw Error() //Fail(MemberNotFoundScopeError())
         return members
     }
+
+    // ---------------------------------------------------------------------------------------------
 }
