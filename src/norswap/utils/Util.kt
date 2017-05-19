@@ -66,7 +66,7 @@ fun String.snake_to_camel(): String
  * @throws IOException see [Files.readAllBytes]
  * @throws InvalidPathException see [Paths.get]
  */
-fun readFile(file: String)
+fun read_file (file: String)
     = String(Files.readAllBytes(Paths.get(file)))
 
 // -------------------------------------------------------------------------------------------------
@@ -78,7 +78,7 @@ fun readFile(file: String)
  * the "glob:" part should be omitted.
  */
 @Throws(IOException::class)
-fun glob(pattern: String, directory: Path): List<Path>
+fun glob (pattern: String, directory: Path): List<Path>
 {
     val matcher = FileSystems.getDefault().getPathMatcher("glob:" + pattern)
 
@@ -256,20 +256,44 @@ inline fun <reified T> Iterable<*>.first_instance(): T
 // -------------------------------------------------------------------------------------------------
 
 /**
- * A way to reclaim the ternary operator: `(cond) .t (x) ?: (y)`
- * Parentheses might be omitted around `cond` and `y`.
+ * Syntactic sugar for [then].
+ *
+ * Enables two cute things:
+ *
+ * - An if that evaluates to true on the else branch: `(<condition>) .. { <body> }`
+ * - The ternary operator: `(<condition>) .. { <if-true> } ?: <if-false>`
  */
-@Suppress("NOTHING_TO_INLINE")
-inline fun <T: Any> Boolean.t (value: T): T?
-    = if (this) value else null
+inline operator fun <T> Boolean.rangeTo (f: () -> T): T?
+    = then(f)
 
 // -------------------------------------------------------------------------------------------------
 
 /**
- * A way to reclaim the ternary operator: `cond .t { x } ?: y`
+ * Enables two cute things:
+ *
+ * - An if that evaluates to true on the else branch: `(<condition>) .. { <body> }`
+ * - The ternary operator: `(<condition>) .. { <if-true> } ?: <if-false>`
  */
-@Suppress("NOTHING_TO_INLINE")
-inline fun <T: Any> Boolean.t (f: () -> T): T?
+inline fun <T> Boolean.then (f: () -> T): T?
     = if (this) f() else null
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * If the receiver can be cast to [T], run [f] over it and return the result. Else return null.
+ *
+ * You typically have to specify the type of the parameter in the lambda, because Kotlin type
+ * inference is dumb.
+ */
+inline fun <reified T, R> Any?.when_is (f: (T) -> R): R?
+    = if (this is T) f(this) else null
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * Applies [f] to the receiver if it is non-null, else return null.
+ */
+inline fun <T: Any, R: Any> T?.inn (f: (T) -> R): R?
+    = if (this != null) f(this) else null
 
 // -------------------------------------------------------------------------------------------------

@@ -3,7 +3,7 @@ import norswap.autumn.CaughtException
 import norswap.autumn.UncaughtException
 import norswap.lang.java8.Java8Grammar
 import norswap.utils.glob
-import norswap.utils.readFile
+import norswap.utils.read_file
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.Duration
@@ -29,7 +29,7 @@ fun main (args: Array<String>)
 
     paths.each(slices) { i, it ->
 
-        val input = readFile(it.toString())
+        val input = read_file(it.toString())
         var result = false
 
         time += measureNanoTime {

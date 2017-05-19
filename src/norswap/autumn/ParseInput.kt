@@ -2,7 +2,7 @@ package norswap.autumn
 import norswap.autumn.conf.*
 import norswap.utils.expandTabsToBuilder
 import norswap.utils.plusAssign
-import norswap.utils.readFile
+import norswap.utils.read_file
 import java.nio.file.Path
 
 /**
@@ -65,7 +65,7 @@ class ParseInput (
                  line_start: Int = LINE_START,
                  column_start: Int = COLUMN_START)
     : this (
-        readFile(path.toString()),
+        read_file(path.toString()),
         path.toString(),
         path.toFile().lastModified(),
         tab_size,
