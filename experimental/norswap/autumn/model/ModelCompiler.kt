@@ -26,11 +26,11 @@ var top_level = true
 // -------------------------------------------------------------------------------------------------
 
 /**
- * Parsers with these names are overrides from `Grammarè.
+ * Parsers with these names are overrides from `Grammar`.
  */
 val overrides = listOf("whitespace", "root")
 
-// -------------------------------------------------------------------------------------------------
+// ----------------------------------------------------`---------------------------------------------
 
 /**
  * List of Kotlin keywords, that have to be escaped with backquotes if used as parser names.
@@ -47,11 +47,11 @@ val kotlin_keywords = listOf(
  * (said otherwise, their expressions return `Parser` rather than `Boolean`).
  */
 val val_parsers = listOf<Class<out ParserBuilder>>(
-    TokenBuilder::class.java,
+    TokenBuilder        ::class.java,
     PlainTokenBuilder   ::class.java,
     StrTokenBuilder     ::class.java,
     KeywordBuilder      ::class.java,
-    AssocLeftBuilder::class.java,
+    AssocLeftBuilder    ::class.java,
     TokenChoiceBuilder  ::class.java)
 
 // -------------------------------------------------------------------------------------------------
@@ -61,8 +61,8 @@ val val_parsers = listOf<Class<out ParserBuilder>>(
  * when used as top-level parser declaration.
  */
 val equal_same_line = listOf<Class<out ParserBuilder>>(
-    BuildBuilder::class.java,
-    AffectBuilder::class.java,
+    BuildBuilder        ::class.java,
+    AffectBuilder       ::class.java,
     AssocLeftBuilder    ::class.java)
 
 // -------------------------------------------------------------------------------------------------
@@ -142,7 +142,7 @@ val compile_top_level = Poly1<Builder, String>().apply {
     on <SectionBuilder> {
         when (it.level) {
             1 ->  "    /// ${it.name!!.capitalize()} " + "=".repeat(91 - it.name!!.length)
-            2 -> "    //// ${it.name!!.capitalize()} " + "-".repeat(71 - it.name!!.length)
+            2 -> "    // ${it.name!!.capitalize()} " + "-".repeat(71 - it.name!!.length)
             else -> ""
     }   }
 
@@ -320,7 +320,9 @@ val model_compiler = Poly1 <ParserBuilder, String>().apply {
     }
 
     on <BuildBuilder> {
+        // TODO ERROR WITH BACK LOG with assign
         val backlog = if (it.backlog == 0) "" else "${it.backlog}, "
+        println("" + it.backlog + " " + it.effect)
         if (top_level)
             "build($backlog\n" +
             "        syntax = { ${digest(it.child)} },\n" +

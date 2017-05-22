@@ -148,7 +148,7 @@ class Java8Model
         = `_`.repeat0
 
     val digits1
-        = !"digit" around0 underscores
+        = !"digit" around1 underscores
 
     val digits0
         = !"digit" around0 underscores
@@ -860,18 +860,18 @@ class Java8Model
         = (or_expr .. ternary_suffix.opt).end
 
     val assignment_suffix = (
-          (`=`   .. !"expr").build("Assign(it(0), it(1), \"=\")")
-        / (`+=`  .. !"expr").build("Assign(it(0), it(1), \"+=\")")
-        / (`-=`  .. !"expr").build("Assign(it(0), it(1), \"-=\")")
-        / (`*=`  .. !"expr").build("Assign(it(0), it(1), \"*=\")")
-        / (dive  .. !"expr").build("Assign(it(0), it(1), \"/=\")")
-        / (`%=`  .. !"expr").build("Assign(it(0), it(1), \"%=\")")
-        / (sle   .. !"expr").build("Assign(it(0), it(1), \"<<=\")")
-        / (sre   .. !"expr").build("Assign(it(0), it(1), \">>=\")")
-        / (bsre  .. !"expr").build("Assign(it(0), it(1), \">>>=\")")
-        / (`&=`  .. !"expr").build("Assign(it(0), it(1), \"&=\")")
-        / (`^=`  .. !"expr").build("Assign(it(0), it(1), \"^=\")")
-        / (`|=`  .. !"expr").build("Assign(it(0), it(1), \"|=\")")
+          (`=`   .. !"expr").build(1, "Assign(it(0), it(1), \"=\")")
+        / (`+=`  .. !"expr").build(1, "Assign(it(0), it(1), \"+=\")")
+        / (`-=`  .. !"expr").build(1, "Assign(it(0), it(1), \"-=\")")
+        / (`*=`  .. !"expr").build(1, "Assign(it(0), it(1), \"*=\")")
+        / (dive  .. !"expr").build(1, "Assign(it(0), it(1), \"/=\")")
+        / (`%=`  .. !"expr").build(1, "Assign(it(0), it(1), \"%=\")")
+        / (sle   .. !"expr").build(1, "Assign(it(0), it(1), \"<<=\")")
+        / (sre   .. !"expr").build(1, "Assign(it(0), it(1), \">>=\")")
+        / (bsre  .. !"expr").build(1, "Assign(it(0), it(1), \">>>=\")")
+        / (`&=`  .. !"expr").build(1, "Assign(it(0), it(1), \"&=\")")
+        / (`^=`  .. !"expr").build(1, "Assign(it(0), it(1), \"^=\")")
+        / (`|=`  .. !"expr").build(1, "Assign(it(0), it(1), \"|=\")")
     ).end
 
     val assignment
