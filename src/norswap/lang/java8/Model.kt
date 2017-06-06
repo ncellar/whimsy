@@ -854,7 +854,7 @@ class Java8Model
 
     val ternary_suffix
         = (`?` .. !"expr" .. colon .. !"expr")
-        .build("Ternary(it(0), it(1), it(2))")
+        .build(1, "Ternary(it(0), it(1), it(2))")
 
     val ternary
         = (or_expr .. ternary_suffix.opt).end

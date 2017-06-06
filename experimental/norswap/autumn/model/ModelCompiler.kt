@@ -30,7 +30,7 @@ var top_level = true
  */
 val overrides = listOf("whitespace", "root")
 
-// ----------------------------------------------------`---------------------------------------------
+// -------------------------------------------------------------------------------------------------
 
 /**
  * List of Kotlin keywords, that have to be escaped with backquotes if used as parser names.

@@ -56,7 +56,7 @@ fun String.snake_to_camel(): String
     return this
         .split('_')
         .map(String::capitalize)
-        .joinToString()
+        .joinToString("")
 }
 
 // -------------------------------------------------------------------------------------------------

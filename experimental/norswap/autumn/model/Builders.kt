@@ -1,5 +1,4 @@
 package norswap.autumn.model
-import norswap.autumn.Grammar
 import norswap.utils.Visitable
 
 // -------------------------------------------------------------------------------------------------

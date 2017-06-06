@@ -972,7 +972,7 @@ class Grammar2: TokenGrammar()
         op({ `||`() }, { Or(it(0), it(1)) })
     }
 
-    fun ternary_suffix() = build(
+    fun ternary_suffix() = build(1, 
         syntax = { seq { `?`() && expr() && colon() && expr() } },
         effect = { Ternary(it(0), it(1), it(2)) })
 
