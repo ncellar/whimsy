@@ -1,5 +1,5 @@
 package norswap.lang.examples.simple
-import norswap.uranium.CNode
+import norswap.lang.CNode
 
 abstract class Binary (val left: Any, val right: Any) : CNode()
 

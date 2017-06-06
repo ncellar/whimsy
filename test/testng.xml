@@ -27,7 +27,6 @@ the classes in the meantime.
         </packages>
         <classes>
             <class name="norswap.lang.java8.test.Grammar"/>
-            <class name="norswap.lang.java8.test.TypingRules"/>
         </classes>
     </test>
     <test name="java4">

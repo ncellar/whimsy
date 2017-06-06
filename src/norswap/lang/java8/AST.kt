@@ -1,9 +1,7 @@
 @file:Suppress("PackageDirectoryMismatch")
 package norswap.lang.java8.ast
 import norswap.autumn.ParseInput
-import norswap.uranium.CNode
-import norswap.uranium.Node
-import norswap.uranium.ast_utils.*
+import norswap.lang.*
 
 // Annotations -------------------------------------------------------------------------------------
 

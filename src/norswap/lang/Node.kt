@@ -1,7 +1,22 @@
-@file:JvmName("ast_utils")
-@file:Suppress("PackageDirectoryMismatch", "UNCHECKED_CAST")
-package norswap.uranium.ast_utils
-import norswap.uranium.Node
+@file:Suppress("UNCHECKED_CAST")
+package norswap.lang
+
+// -------------------------------------------------------------------------------------------------
+
+interface Node
+{
+    /**
+     * Returns the children of this node.
+     *
+     * The default implementation returns an empty sequence, override to supply the correct
+     * behaviour.
+     */
+    fun children() = emptySequence<Node>()
+}
+
+// -------------------------------------------------------------------------------------------------
+
+open class CNode: Node
 
 // -------------------------------------------------------------------------------------------------
 
@@ -11,7 +26,7 @@ import norswap.uranium.Node
  */
 inline val Iterable<Any>?.nseq: Sequence<Node>
     get() = if (this == null) emptySequence()
-            else (this as Iterable<Node>).asSequence()
+    else (this as Iterable<Node>).asSequence()
 
 // -------------------------------------------------------------------------------------------------
 
@@ -37,7 +52,7 @@ inline fun <T: Any> Iterable<T>.nfilter (crossinline f: (T) -> Boolean): Sequenc
  */
 inline val Sequence<Any>?.nseq: Sequence<Node>
     get() = if (this == null) emptySequence()
-            else this as Sequence<Node>
+    else this as Sequence<Node>
 
 // -------------------------------------------------------------------------------------------------
 
@@ -63,9 +78,9 @@ fun nseqN (vararg elements: Any?): Sequence<Node>
  */
 operator fun Sequence<Node>.plus (element: Any?): Sequence<Node>
     =   if (element == null)
-            this
-        else
-            this.plusElement(element as Node)
+    this
+else
+    this.plusElement(element as Node)
 
 // -------------------------------------------------------------------------------------------------
 
