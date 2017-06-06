@@ -8,7 +8,6 @@ import norswap.lang.java8.scopes.Scope
 import norswap.lang.java8.scopes.ClassScope
 import norswap.lang.java8.typing.MemberInfo
 import norswap.uranium.Attribute
-import norswap.uranium.Continue
 import norswap.uranium.Reaction
 import norswap.uranium.Context
 import norswap.utils.attempt
@@ -26,7 +25,7 @@ import java.net.URLClassLoader
  * dots.
  *
  * Canonical class name: the fully qualified class name (with outer classes and package). Each
- * class is separated from its inner classe by a dollar, while package components are separated by
+ * class is separated from its inner class by a dollar, while package components are separated by
  * dots.
  *
  * Full class chain: the list of components of a full class name.
@@ -96,7 +95,7 @@ object Resolver
         if (old == null) Context.classes[cano_name] = klass
         else success = handle_conflict(old, klass)
 
-        if (klass.inner) register_class_chain(klass)
+        if (success) register_class_chain(klass)
         return success
     }
 
@@ -106,6 +105,8 @@ object Resolver
      * Called by [register_class] when the same class is defined by two different sources.
      *
      * Returns true iff the new class was registered as a result of the resolution.
+     *
+     * In case of unhandled conflict, always keep the old class.
      */
     private fun handle_conflict (old: ClassScope, new: ClassScope): Boolean
     {
@@ -113,7 +114,6 @@ object Resolver
         val reactor   = Context.reactor
         val conf      = reactor.attachment as Java8Config
 
-        // In case of unhandled conflict, always keep the old class.
         when (old) {
             is SourceClassLike ->
                 when (new) {
@@ -157,8 +157,10 @@ object Resolver
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * Called by [register_class] for inner-class specific handling, as these classes
-     * may cause class chain ambiguities.
+     * Called by [register_class] to handle class chain ambiguities:
+     * we ensure that each full class chain is associated to the most specific class
+     * it can designated (i.e. either the only one that matches the chain, or the one with
+     * the shortest outer class path). We also report an error in case of ambiguity.
      *
      * Returns true iff the new class was registered (there was no unsolvable conflict).
      */
@@ -173,7 +175,7 @@ object Resolver
         val i1 = klass.canonical_name.indexOf('$')
         val i2 = old  .canonical_name.indexOf('$')
 
-        if (i1 < i2) {
+        if (i1 > 0 && i1 < i2) {
             // The new class is more prioritary than the old class chain resolution.
             val chain_node = reactor.java_virtual_node.chains
             chain_node[chain_name] = klass
@@ -192,7 +194,7 @@ object Resolver
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * Returns the pass to the class designated by the given canonical name using the given class
+     * Returns the path to the class designated by the given canonical name using the given class
      * loader.
      */
     fun find_class_path (loader: URLClassLoader, cano_name: String): URL?
@@ -200,6 +202,10 @@ object Resolver
 
     // ---------------------------------------------------------------------------------------------
 
+    /**
+     * Load a class from the given URL, yielding a [ClassScope]. Returns null if
+     * the class fails to load AND registers an error if the class fails to load.
+     */
     private fun load_from_url (class_url: URL): ClassScope?
     {
         try {
@@ -215,6 +221,11 @@ object Resolver
 
     // ---------------------------------------------------------------------------------------------
 
+    /**
+     * Load a class with the given canonical name from the class path. Returns null if either there
+     * is no class with the given name, or the class is found but fails to load (in which case an
+     * error is also registered).
+     */
     private fun load_from_classfile (cano_name: String): ClassScope?
     {
         return find_class_path(loader, cano_name)
@@ -250,10 +261,10 @@ object Resolver
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * Registers a reaction that will attempt loading the class will the given canonical name,
+     * Registers a reaction that will attempt loading the class with the given canonical name,
      * and register inside [scope] with the given [name].
      */
-    private fun load_class_reaction (cano_name: String, name: String, scope: Scope.Node)
+    private fun register_load_class_reaction(cano_name: String, name: String, scope: Scope.Node)
     {
         Reaction (scope) {
             _optional = true
@@ -291,7 +302,7 @@ object Resolver
             return cached
         }
 
-        load_class_reaction(cano_name, name, scope)
+        register_load_class_reaction(cano_name, name, scope)
         return null
     }
 
@@ -356,100 +367,108 @@ object Resolver
 
     // ---------------------------------------------------------------------------------------------
 
-    // fully qualified chains
+    /**
+     * TODO
+     */
     fun full_chain (chain: List<String>): ClassScope?
     {
+        // TODO to be inspect in the context of klass_chain
+
         val cached = chain_cache[chain]
         if (cached == Miss) return null
         if (cached != null) return cached
 
         val cano_names = cano_names(chain)
-        val chain_name = cano_names[0] // no static classes
         val reactor    = Context.reactor
         val class_node = reactor.java_virtual_node.classes
-        val chain_node = reactor.java_virtual_node.classes
+        val chain_name = cano_names[0] // no static classes
+        val chain_node = reactor.java_virtual_node.chains
         val chain_attr = Attribute(chain_node, chain_name)
 
-        val required = cano_names.map {
-            class_cache[it] ?: load_class_reaction(it, it, class_node)
-            Attribute(class_node, it)
-        }
-
-        Reaction (chain_node) {
-            _consumed = required
-            _provided = listOf(chain_attr)
-            _trigger  = {
-                val available = consumed.filter { it.get() != Attribute.None }
-                val klass = available.lastOrNull()?.get() as ClassScope?
-
-                if (available.size > 1) {
-                    klass?.ambiguous_chain = true
-                    reactor.register_error(AmbiguousClassDefinitions(chain_name))
-                }
-
-                chain_cache[chain]      = klass ?: Miss
-                chain_node[chain_name]  = klass ?: Attribute.None
-            }
+        cano_names.forEach {
+            class_cache[it] ?: register_load_class_reaction(it, it, class_node)
         }
 
         // Redo the current reaction when the chain becomes available,
         // or when its value changes (for a more specific one).
         Reaction (chain_node) {
+            _optional = true
             _consumed = listOf(chain_attr)
             _pushed = Context.reaction
         }
 
         return null
-
-        // TODO
-        // - all raw node access must check for None
     }
 
     // ---------------------------------------------------------------------------------------------
 
+
+    // Java Chain Resolution
+    //
+    // Java always attempts to locate the outer class first.
+    // This means that if there exists a package whose name is the same as the outer class,
+    // the classes of the package are disregarded.
+    //
+    // Example:
+    //
+    // a/
+    // |- Main.java  (references a.B)
+    // |- B.java
+    // |- a.java
+    //
+    // Here, the reference to `a.B` will fail, because Main resolve `a` as a reference to the
+    // `a` class, which has no `B` nested class, even though `a.B` is the fully qualified name
+    // of a class!
+
+    /**
+     * TODO
+     */
     fun klass_chain (scope: Scope, chain: List<String>): ClassScope?
     {
-        // TODO
-        // - will hang on every component to know whether it exists or not?
-        // - no: will return null if not present
-        // - problem: need to load static classes at some point...
-        // - override lookup function in binary thingy to throw a continue
-
         var cur_scope: Scope? = scope
         var last = 0
-        var cont: Continue? = null
 
-        try {
-            for (item in chain) {
-                val next = cur_scope?.class_like(item)
-                cur_scope = next
-                if (next == null) break
-                ++last
-            }
+        // RETRY
+        // - almost everything can change
+        // - given scope: must be handled at another level
+        //      - the one that calls klass_chain
+        //      - will klass_chain ever be called with a class scope? probably only static scope
+        // - new classes
+        //      - must modify package scope, which must modify given scope
+        //      - these lookup dependencies must be registered! TODO
+        // - new inner classes
+        //      - can't happen without actually changing the class
+        //      - but if we wish to generalize, we need to record these dependencies
+
+        // ERROR
+        // - control whether the retry logic is option or not depending on whether
+        //   there already is a resolution
+
+        // TODO
+        // - klass has no error handling or retry (and is currently unused)
+
+        // TODO
+        // - alternative idea: cache chains and install dependencies over partial chains
+
+        for (item in chain) {
+            cur_scope = cur_scope!!.class_like(item)
+            if (cur_scope == null) break
+            ++last
         }
-        catch (e: Continue) { cont = e }
-
-        // TODO if full chain returns but we have a continuation?
-        // - reaction is registered on instantiation
-        // - but continued_in/from only in reactor
-        //      - hard to set when instantiating: we don't know from!
-        //      - expand context?
-        //      - alternative: add dependency on +self to all rules
-        //          - issue: must propagate self down
-        // - triggered = false in reactor
 
         if (last == chain.size)
             return cur_scope as ClassScope
         if (last == 0)
             return full_chain(chain)
-        if (cont != null)
-            throw cont
         else
-            throw Error() //Fail(ClassNotFoundScopeError())
+            return null
     }
 
     // ---------------------------------------------------------------------------------------------
 
+    /**
+     * TODO
+     */
     fun resolve_members (cano_name: String, member: String): Collection<MemberInfo>
     {
         val klass = klass(cano_name)
