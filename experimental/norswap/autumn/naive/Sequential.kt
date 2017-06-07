@@ -6,7 +6,7 @@ import norswap.autumn.parsers.*
 /**
  * Matches all the parsers in a sequence.
  */
-class Seq (val ps: List<Parser>): Parser()
+class Seq (vararg val ps: Parser): Parser()
 {
     override fun invoke() = grammar.seq { ps.all(Parser::invoke) }
 }

@@ -16,7 +16,7 @@ This file contains parsers that perform a choice between their sub-parsers.
 /**
  * Matches the same things as the first parser in the list that matches, or fails if none succeeds.
  */
-class Choice (val ps: List<Parser>): Parser()
+class Choice (vararg val ps: Parser): Parser()
 {
     override fun invoke() = grammar.choice { ps.any(Parser::invoke) }
 }
