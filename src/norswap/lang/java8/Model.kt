@@ -777,7 +777,7 @@ class Java8Model
 
     val not
         = (`!`  .. !"prefix_expr")
-        .build ("Not(it(0))")
+        .build ("Negate(it(0))")
 
     val cast
         = (type_union.parens .. (lambda / !"prefix_expr"))

@@ -313,7 +313,7 @@ abstract class UnaryOp: UnaryExpression()
 data class UnaryPlus    (override val operand: Expr): UnaryOp()
 data class UnaryMinus   (override val operand: Expr): UnaryOp()
 data class Complement   (override val operand: Expr): UnaryOp()
-data class Not          (override val operand: Expr): UnaryOp()
+data class Negate       (override val operand: Expr): UnaryOp()
 
 abstract class BinaryOp: CNode(), Expr
 {

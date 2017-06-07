@@ -901,7 +901,7 @@ class Grammar2: TokenGrammar()
 
     fun not() = build(
         syntax = { seq { `!`() && prefix_expr() } },
-        effect = { Not(it(0)) })
+        effect = { Negate(it(0)) })
 
     fun cast() = build(
         syntax = { seq { parens { type_union() } && choice { lambda() || prefix_expr() } } },
