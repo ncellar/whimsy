@@ -214,6 +214,10 @@ object EmptyParensBuilder   : EmptyBracketsBuilder("(", ")")
 
 // -------------------------------------------------------------------------------------------------
 
+class ParameterlessBuilder (val parser_name: String): LeafBuilder()
+
+// -------------------------------------------------------------------------------------------------
+
 abstract class WrapperBuilder(val child: ParserBuilder): ParserBuilder()
 {
     override fun children() = sequenceOf(child)

@@ -10,13 +10,13 @@ class Java8Model
     val `Whitespace` = section(2)
 
     val line_comment
-        =  ("//".str .. (!"char_any" until0 "\n".str)).end
+        =  ("//".str .. (char_any until0 "\n".str)).end
 
     val multi_comment
-        =  ("/*".str .. (!"char_any" until0 "*/".str)).end
+        =  ("/*".str .. (char_any until0 "*/".str)).end
 
     val whitespace
-        = (!"space_char" / line_comment / multi_comment).repeat0
+        = (space_char / line_comment / multi_comment).repeat0
 
     //// Keywords and Operators ------------------------------------------------
     val `Keywords and Operators`= section(2)
@@ -133,7 +133,7 @@ class Java8Model
     //// Identifiers -----------------------------------------------------------
     val `Identifiers` = section(2) // (must come after keywords)
 
-    val iden = (!"java_iden").token
+    val iden = (java_iden).token
 
     val `_`
         = "_".str
@@ -148,13 +148,13 @@ class Java8Model
         = `_`.repeat0
 
     val digits1
-        = !"digit" around1 underscores
+        = digit around1 underscores
 
     val digits0
-        = !"digit" around0 underscores
+        = digit around0 underscores
 
     val hex_digits
-        = !"hex_digit" around1 underscores
+        = hex_digit around1 underscores
 
     val hex_num
         = (hex_prefix .. hex_digits).end
@@ -207,7 +207,7 @@ class Java8Model
         =  (binary_prefix .. (bit.repeat1 around1 underscores)).end
 
     val octal_num
-        =  ("0".str .. (underscores .. !"octal_digit").repeat1).end
+        =  ("0".str .. (underscores .. octal_digit).repeat1).end
 
     val decimal_num
         = ("0".str / digits1).end
@@ -223,25 +223,25 @@ class Java8Model
     val `Characters and Strings` = section(2)
 
     val octal_escape = (
-        (('0' upto '3') .. !"octal_digit" .. !"octal_digit") /
-        (!"octal_digit" .. (!"octal_digit").opt)
+        (('0' upto '3') .. octal_digit .. octal_digit) /
+        (octal_digit .. octal_digit.opt)
     ).end
 
     val unicode_escape
-        =  ("u".str.repeat1 .. (!"hex_digit").repeat(4)).end
+        =  ("u".str.repeat1 .. (hex_digit).repeat(4)).end
 
     val escape
         =  ("\\".str .. ("btnfr\"'\\".set / octal_escape / unicode_escape)).end
 
         val naked_char
-        = (escape / ("'\\\n\r".set.not .. !"char_any")).end
+        = (escape / ("'\\\n\r".set.not .. char_any)).end
 
     val char_literal
         = ("'".str .. naked_char .. "'".str)
         .token("parse_char(it)")
 
     val naked_string_char
-        = (escape / ("\"\\\n\r".set.not .. !"char_any")).end
+        = (escape / ("\"\\\n\r".set.not .. char_any)).end
 
     val string_literal
         = ("\"".str .. naked_string_char.repeat0 .. "\"".str)

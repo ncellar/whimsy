@@ -343,6 +343,8 @@ val model_compiler = Poly1 <ParserBuilder, String>().apply {
             "        effect = { ${it.effect} })"
     }
 
+    on <ParameterlessBuilder> {
+        it.parser_name + "()"
     }
 
     on <AssocLeftBuilder> {
