@@ -2,6 +2,7 @@ package norswap.lang.java8.benchmark
 import norswap.autumn.CaughtException
 import norswap.autumn.UncaughtException
 //import norswap.lang.java8.Grammar2
+//import norswap.lang.java8.GraphGrammar
 import norswap.lang.java8.Java8Grammar
 import norswap.utils.glob
 import norswap.utils.read_file
@@ -16,6 +17,7 @@ fun main (args: Array<String>)
 {
     val g = Java8Grammar()
 //    val g = Grammar2()
+//    val g = GraphGrammar()
 
     val os = System.getProperty("os.name")
 
