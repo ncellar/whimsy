@@ -3,6 +3,7 @@ import norswap.autumn.SideEffect
 import norswap.autumn.Grammar
 import norswap.autumn.undo
 import norswap.utils.arrayOfSize
+import norswap.utils.cast
 
 /**
  * An array list whose mutations cause [SideEffect]s to be applied to [grammar].
@@ -41,7 +42,7 @@ class UndoList<T> (val grammar: Grammar): AbstractList<T>()
     {
         if (length == 0)
             throw IllegalStateException("empty stack")
-        return array[length - 1] as T
+        return array[length - 1].cast()
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -83,7 +84,7 @@ class UndoList<T> (val grammar: Grammar): AbstractList<T>()
             throw IllegalStateException("empty stack")
         val item = array[--length]
         array[length] = null
-        return item as T
+        return item.cast()
     }
 
     // ---------------------------------------------------------------------------------------------
