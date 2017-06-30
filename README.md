@@ -1,4 +1,4 @@
-<img align="right" src="logo.png" />
+<img align="right" src="logo.png" width="100" height="100" />
 
 # The Whimsy Compiler Framework
 
