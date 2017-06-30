@@ -305,6 +305,18 @@
       <artifactId>bcel</artifactId>
       <version>6.0</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.ow2.asm</groupId>
+      <artifactId>asm</artifactId>
+      <version>5.2</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.ow2.asm</groupId>
+      <artifactId>asm-tree</artifactId>
+      <version>5.2</version>
+    </dependency>
   </dependencies>
 
 </project>
