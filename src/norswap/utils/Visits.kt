@@ -45,10 +45,11 @@ typealias ReducerAdvice <Node, Out>
 /**
  * Visits the receiver with [visitor], using pre-order.
  */
-fun <In: Visitable<In>> In.visit_pre (visitor: (In) -> Any)
+fun <In: Visitable<In>, Out> In.visit_pre (visitor: (In) -> Out): Out
 {
-    visitor(this)
+    val out = visitor(this)
     children().forEach { it.visit_pre(visitor) }
+    return out
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -69,11 +70,11 @@ fun <In: Visitable<In>, Out> In.visit_post(visitor: (In) -> Out): Out
 /**
  * Visits the receiver with [advice], calling it both before and after visiting each node's children.
  */
-fun <In: Visitable<In>, Out> In.visit_around(advice: Advice1<In, Out>)
+fun <In: Visitable<In>, Out> In.visit_around(advice: Advice1<In, Out>): Out
 {
     advice(this, true)
     children().forEach { it.visit_around(advice) }
-    advice(this, false)
+    return advice(this, false)
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -96,6 +97,65 @@ fun <In: Visitable<In>, Out> In.visit_reduce_around(reducer: ReducerAdvice<In, O
 {
     reducer(this, null)
     return reducer(this, children().mapToArray { it.visit_reduce_around(reducer) })
+}
+
+// =================================================================================================
+
+/**
+ * Visits the receiver with [visitor], using pre-order.
+ */
+fun <N, R> N.visit_pre (walker: (N) -> List<N>, visitor: (N) -> R): R
+{
+    val out = visitor(this)
+    walker(this).forEach { it.visit_pre(walker, visitor) }
+    return out
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * Visits the receiver with [visitor], using post-order.
+ *
+ * Returns the result of the root's visit.
+ */
+fun <N, R> N.visit_post (walker: (N) -> List<N>, visitor: (N) -> R): R
+{
+    walker(this).forEach { it.visit_post(walker, visitor) }
+    return visitor(this)
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * Visits the receiver with [advice], calling it both before and after visiting each node's children.
+ */
+fun <N, R> N.visit_around (walker: (N) -> List<N>, advice: Advice1<N, R>): R
+{
+    advice(this, true)
+    walker(this).forEach { it.visit_around(walker, advice) }
+    return advice(this, false)
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * Visits the receiver, reducing it to a single value using [reducer].
+ */
+fun <N, R> N.visit_reduce (walker: (N) -> List<N>, reducer: Reducer<N, R>): R
+{
+    return reducer(this, walker(this).mapToArray { it.visit_reduce(walker, reducer) })
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * Visits the receiver, reducing to a single value using [reducer], calling it both before
+ * and after visiting each node's children.
+ */
+fun <N, R> N.visit_reduce_around (walker: (N) -> List<N>, reducer: ReducerAdvice<N, R>): R
+{
+    reducer(this, null)
+    return reducer(this, walker(this).mapToArray { it.visit_reduce_around(walker, reducer) })
 }
 
 // =================================================================================================
