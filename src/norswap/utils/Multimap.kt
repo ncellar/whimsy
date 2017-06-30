@@ -2,10 +2,28 @@
 package norswap.utils.multimap
 
 // -------------------------------------------------------------------------------------------------
+/*
+
+A set of utilities to emulate multi-maps (maps where multiple values can be associated to each key)
+in terms of maps from keys to arraylists of values.
+
+The idea is to avoid redefining a whole class and to exploit the flexibility of the underlying
+representation.
+
+*/
+// -------------------------------------------------------------------------------------------------
 
 typealias MultiMap<K, V>        = Map<K, List<V>>
 typealias MutableMultiMap<K, V> = MutableMap<K, ArrayList<V>>
 typealias HashMultiMap<K, V>    = HashMap<K, ArrayList<V>>
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * Returns an empty immutable multimap.
+ */
+fun <K, V> empty_multimap(): MultiMap<K, V>
+    = emptyMap()
 
 // -------------------------------------------------------------------------------------------------
 
