@@ -34,6 +34,7 @@ class Reaction private constructor()
     // ---------------------------------------------------------------------------------------------
 
     private lateinit var satisfied: BooleanArray
+        private set
 
     // ---------------------------------------------------------------------------------------------
 
@@ -44,11 +45,12 @@ class Reaction private constructor()
     internal fun satisfied (propagator: Propagator, attr: Attribute)
     {
         val i = consumed.indexOf(attr)
-        if (!satisfied[i])
-            ++ nsatisfied
+        if (!satisfied[i]) {
+            ++nsatisfied
+            satisfied[i] = true
+        }
         if (nsatisfied == consumed.size)
             propagator.enqueue(this)
-        satisfied[i] = true
     }
 
     // ---------------------------------------------------------------------------------------------

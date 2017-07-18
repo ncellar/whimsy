@@ -1,7 +1,9 @@
 package norswap.uranium.java.resolution
-import norswap.uranium.java.model.BytecodeClass
-import norswap.uranium.java.model.Klass
-import norswap.uranium.java.model.ReflectionClass
+import norswap.uranium.Propagator
+import norswap.uranium.UraniumError
+import norswap.uranium.java.model2.bytecode.BytecodeClass
+import norswap.uranium.java.model2.Klass
+import norswap.uranium.java.model2.reflect.ReflectionClass
 import norswap.utils.attempt
 import norswap.utils.rangeTo
 import java.net.URL
@@ -9,9 +11,12 @@ import java.net.URLClassLoader
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.tree.ClassNode
 
-
-object Resolver
+class Resolver
 {
+    // ---------------------------------------------------------------------------------------------
+
+    lateinit var propagator: Propagator
+
     // ---------------------------------------------------------------------------------------------
 
     private val class_cache = HashMap<String, Klass>()
@@ -30,9 +35,16 @@ object Resolver
 
     // ---------------------------------------------------------------------------------------------
 
+    fun add_source_class(klass: Klass)
+    {
+        class_cache[klass.binary_name] = klass
+    }
+
+    // ---------------------------------------------------------------------------------------------
+
     /**
-     * Returns the path to the class designated by the given *binary* name using the given class
-     * loader.
+     * Returns the path to the class designated by the given binary name using the given class
+     * loader, or null if no such path exists.
      */
     private fun find_class_path (loader: URLClassLoader, name: String): URL?
         = loader.findResource(name.replace('.', '/') + ".class")
@@ -40,8 +52,8 @@ object Resolver
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * Load a class from the given URL, yielding a [BytecodeClass]. Returns null if
-     * the class fails to load AND registers an error if the class fails to load.
+     * Load a class from the given URL, yielding a [BytecodeClass]. Returns null and registers
+     * an error if the class fails to load.
      */
     private fun load_from_url (class_url: URL): Klass?
     {
@@ -52,8 +64,7 @@ object Resolver
             return BytecodeClass(node)
         }
         catch (e: Exception) {
-            // The class was found, but we cannot load it.
-            // TODO register error
+            propagator.report(UraniumError("Could not load: $class_url"))
             return null
         }
     }
@@ -89,12 +100,22 @@ object Resolver
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * Try to load a class from .class files or reflectively, using its *binary* name.
+     * Returns a class' information given its binary name. If the information hasn't been loaded
+     * yet, it will be loaded from a .class file, or reflectively.
+     *
+     * Returns null if either there is no class with the given name, or the class is found but fails
+     * to load (in which case an error is also registered).
      */
     fun load_class (name: String): Klass?
     {
-        // TODO update class cache
-        return load_from_classfile(name) ?: load_reflectively(name)
+        val cached = class_cache[name]
+        if (cached != null) return cached
+
+        val loaded = load_from_classfile(name) ?: load_reflectively(name)
+        if (loaded != null)
+            class_cache[name] = loaded
+
+        return loaded
     }
 
     // ---------------------------------------------------------------------------------------------
