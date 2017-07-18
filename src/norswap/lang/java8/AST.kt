@@ -446,17 +446,18 @@ data class Import (
 interface Decl: Stmt
 
 data class EnumConstant (
-        val ann: List<Annotation>,
-        val name: String,
-        val params: List<Expr>?,
-        val body: List<Decl>?)
+    val ann: List<Annotation>,
+    val name: String,
+    val params: List<Expr>?,
+    val body: List<Decl>?)
+    : CNode()
 
 enum class TypeDeclKind { ANNOTATION, CLASS, ENUM, INTERFACE }
 
 data class TypeDecl (
     val input: ParseInput,
     val kind: TypeDeclKind,
-    val mods: List<Remainder>,
+    val mods: List<Modifier>,
     val name: String,
     val tparams: List<TypeParam>,
     val extends: List<Type>,
@@ -470,7 +471,7 @@ data class EnumDecl (
     : CNode(), Decl
 
 data class AnnotationElemDecl (
-    val mods: List<Remainder>,
+    val mods: List<Modifier>,
     val type: Type,
     val name: String,
     val dims: List<Dimension>,
@@ -643,16 +644,26 @@ data class VarDecl (
 
 object SemiStmt: CNode(), Stmt
 
+abstract class CodeDecl: CNode(), Decl
+{
+    abstract val mods: List<Modifier>
+    abstract val tparams: List<TypeParam>
+    abstract val name: String
+    abstract val params: FormalParameters
+    abstract val throwing: List<Type>
+    abstract val body: Block?
+}
+
 data class MethodDecl (
-    val mods: List<Remainder>,
-    val tparams: List<TypeParam>,
-    val retType: Type,
-    val name: String,
-    val params: FormalParameters,
-    val dims: List<Dimension>,
-    val throwing: List<Type>,
-    val body: Block?)
-    : CNode(), Decl
+    override val mods: List<Modifier>,
+    override val tparams: List<TypeParam>,
+             val retType: Type,
+    override val name: String,
+    override val params: FormalParameters,
+             val dims: List<Dimension>,
+    override val throwing: List<Type>,
+    override val body: Block?)
+    : CodeDecl(), Decl
 
 data class InitBlock (
     val static: Boolean,
@@ -660,13 +671,13 @@ data class InitBlock (
     : CNode(), Decl
 
 data class ConstructorDecl (
-    val mods: List<Remainder>,
-    val tparams: List<TypeParam>,
-    val name: String,
-    val params: FormalParameters,
-    val throwing: List<Type>,
-    val body: Block)
-    : CNode(), Decl
+    override val mods: List<Modifier>,
+    override val tparams: List<TypeParam>,
+    override val name: String,
+    override val params: FormalParameters,
+    override val throwing: List<Type>,
+    override val body: Block)
+    : CodeDecl(), Decl
 
 // Root --------------------------------------------------------------------------------------------
 
