@@ -1,6 +1,8 @@
 @file:Suppress("PackageDirectoryMismatch")
 package norswap.utils.multimap
 
+import norswap.utils.inn
+
 // -------------------------------------------------------------------------------------------------
 /*
 
@@ -118,5 +120,75 @@ fun <X, K, V> Array<X>.multi_assoc (f: (X) -> Pair<K, V>): HashMultiMap<K, V>
     forEach { val (k, v) = f(it) ; out.append(k, v) }
     return out
 }
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * Add all key value pairs derived from the iterable by [f] to this multi-map.
+ */
+fun <X, K, V> Iterable<X>.multi_assoc_not_null (f: (X) -> Pair<K, V>?): HashMultiMap<K, V>
+{
+    val out = HashMultiMap<K, V>()
+    forEach { f(it).inn { (k, v) -> out.append(k, v) } }
+    return out
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * Add all key value pairs derived from the array by [f] to this multi-map.
+ */
+fun <X, K, V> Array<X>.multi_assoc_not_null (f: (X) -> Pair<K, V>?): HashMultiMap<K, V>
+{
+    val out = HashMultiMap<K, V>()
+    forEach { f(it).inn { (k, v) -> out.append(k, v) } }
+    return out
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * Returns all values in the multi-map.
+ */
+fun <K, V> MultiMap<K, V>.flat_values(): List<V>
+    = entries.flatMap { it.value }
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * Returns all entries in the multi-map.
+ */
+fun <K, V> MultiMap<K, V>.flat_entries(): List<Pair<K, V>>
+    = entries.flatMap { e -> e.value.map { e.key to it } }
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * Inserts all the entries int a new mutable multimap
+ */
+fun <K, V> Iterable<Pair<K, V>>.to_mutable_multimap(): MutableMultiMap<K, V>
+{
+    val map = HashMultiMap<K, V>()
+    forEach { map.append(it.first, it.second) }
+    return map
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * Inserts all the entries int a new multimap.
+ */
+fun <K, V> Iterable<Pair<K, V>>.to_multimap(): MultiMap<K, V>
+    = to_mutable_multimap()
+
+// -------------------------------------------------------------------------------------------------
+
+/**
+ * Returns a map containing all key-value pairs with values matching the given predicate.
+ */
+fun <K, V> MultiMap<K, V>.flat_filter_values (pred: (V) -> Boolean): MultiMap<K, V>
+    = flat_entries()
+        .filter { pred(it.second) }
+        .to_multimap()
 
 // -------------------------------------------------------------------------------------------------
