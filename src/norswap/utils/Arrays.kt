@@ -12,8 +12,6 @@ inline val <T> Array<T>.str: String
 
 // -------------------------------------------------------------------------------------------------
 
-// TODO: limitation of three next functions? mutation?
-
 /**
  * Returns an array of the given size, populated with nulls, but casted to an array of non-nullable
  * items. This is unsafe, but handy when an array has to be allocated just to be populated
