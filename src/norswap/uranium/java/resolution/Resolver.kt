@@ -1,9 +1,9 @@
 package norswap.uranium.java.resolution
 import norswap.uranium.Propagator
 import norswap.uranium.UraniumError
-import norswap.uranium.java.model2.bytecode.BytecodeClass
-import norswap.uranium.java.model2.Klass
-import norswap.uranium.java.model2.reflect.ReflectionClass
+import norswap.uranium.java.model.bytecode.BytecodeClass
+import norswap.uranium.java.model.Klass
+import norswap.uranium.java.model.reflect.ReflectionClass
 import norswap.utils.attempt
 import norswap.utils.rangeTo
 import java.net.URL
