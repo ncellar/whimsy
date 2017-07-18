@@ -19,7 +19,7 @@
         <module name="whimsy" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
+    <bytecodeTargetLevel target="1.8">
       <module name="whimsy" target="1.8" />
     </bytecodeTargetLevel>
   </component>
