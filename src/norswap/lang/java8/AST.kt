@@ -399,11 +399,14 @@ enum class Keyword: Modifier {
 }
 
 interface FormalParameter: Node
+{
+    val name: String
+}
 
 data class IdenParameter (
     val mods: List<Modifier>,
     val type: Type,
-    val name: String,
+    override val name: String,
     val dims: List<Dimension>)
     : CNode(), FormalParameter
 
@@ -412,12 +415,15 @@ data class ThisParameter (
     val type: Type,
     val qualifier: List<String>)
     : CNode(), FormalParameter
+{
+    override val name = "this"
+}
 
 data class VariadicParameter (
     val mods: List<Modifier>,
     val type: Type,
     val arrayMods: List<Annotation>,
-    val name: String)
+    override val name: String)
     : CNode(), FormalParameter
 
 interface Parameters: Node
