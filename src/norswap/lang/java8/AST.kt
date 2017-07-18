@@ -429,7 +429,7 @@ data class VariadicParameter (
 interface Parameters: Node
 
 data class FormalParameters (
-    val params: List<FormalParameters>)
+    val params: List<FormalParameter>)
     : CNode(), Parameters
 
 data class UntypedParameters (
@@ -557,7 +557,7 @@ data class BasicFor (
 data class EnhancedFor (
     val mods: List<Modifier>,
     val type: Type,
-    val declarator: VarDeclaratorID,
+    val id: VarDeclaratorID,
     val iter: Expr,
     val body: Stmt)
     : CNode(), Stmt
