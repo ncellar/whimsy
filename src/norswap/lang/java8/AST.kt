@@ -12,17 +12,11 @@ interface Annotation: AnnotationElement
 data class AnnotationElementList(
     val elems: List<AnnotationElement>)
 : CNode(), AnnotationElement
-{
-    override fun children() = elems.nseq
-}
 
 data class NormalAnnotation (
     val name: List<String>,
     val elems: List<Pair<String, AnnotationElement>>)
 : CNode(), Annotation
-{
-    override fun children() = elems.nmap { it.second }
-}
 
 data class MarkerAnnotation (
     val name: List<String>)
@@ -32,9 +26,6 @@ data class SingleElementAnnotation (
     val name: List<String>,
     val elem: AnnotationElement)
 : CNode(), Annotation
-{
-    override fun children() = nseq(elem)
-}
 
 // Expressions -------------------------------------------------------------------------------------
 
@@ -58,7 +49,6 @@ data class Literal (
 abstract class TypeBound: CNode()
 {
     abstract val type: Type
-    override fun children() = nseq(type)
 }
 
 data class SuperBound   (override val type: Type): TypeBound()
@@ -78,7 +68,6 @@ data class PrimitiveType (
     val name: String)
     : CNode(), Type
 {
-    override fun children() = ann.nseq
     override fun toString() = name
 }
 
@@ -95,7 +84,6 @@ data class Wildcard (
     val bound: TypeBound?)
     : CNode(), RefType
 {
-    override fun children() = ann.nseq + bound
     override fun toString() = "?"
 }
 
@@ -103,7 +91,6 @@ data class ClassType (
     val parts: List<ClassTypePart>)
     : CNode(), RefType
 {
-    override fun children() = parts.nseq
     override fun toString() = parts.joinToString(separator=".")
 }
 
@@ -113,7 +100,6 @@ data class ClassTypePart (
     val targs: List<Type>)
     : CNode()
 {
-    override fun children() = ann.nseq + targs.nseq
     override fun toString() = name
 }
 
@@ -122,16 +108,12 @@ data class ArrayType (
     val dims: List<Dimension>)
     : CNode(), RefType
 {
-    override fun children() = stem + dims.nseq
     override fun toString() = "$stem[]"
 }
 
 data class Dimension (
     val ann: List<Annotation>)
     : CNode()
-{
-    override fun children() = ann.nseq
-}
 
 data class TypeParam (
     val ann: List<Annotation>,
@@ -139,7 +121,6 @@ data class TypeParam (
     val bounds: List<Type>)
     : CNode()
 {
-    override fun children() = ann.nseq + bounds.nseq
     override fun toString() = name
 }
 
@@ -160,16 +141,10 @@ object This
 data class SuperCall (
     val args: List<Expr>)
     : CNode(), Expr
-{
-    override fun children() = args.nseq
-}
 
 data class ThisCall (
     val args: List<Expr>)
     : CNode(), Expr
-{
-    override fun children() = args.nseq
-}
 
 data class Identifier (
     val name: String)
@@ -178,24 +153,15 @@ data class Identifier (
 data class ClassExpr (
     val type: Type)
     : CNode(), Expr
-{
-    override fun children() = nseq(type)
-}
 
 data class DimExpr (
     val ann: List<Annotation>,
     val expr: Expr)
     : CNode()
-{
-    override fun children() = ann.nseq + expr
-}
 
 data class ArrayInit (
     val items: List<Expr>)
     : CNode(), Expr
-{
-    override fun children() = items.nseq
-}
 
 data class ArrayCtorCall (
     val type: Type,
@@ -203,9 +169,6 @@ data class ArrayCtorCall (
     val dims: List<Dimension>,
     val init: Expr?)
     : CNode(), Expr
-{
-    override fun children() = type + dim_exprs.nseq + dims.nseq + nseqN(init)
-}
 
 data class CtorCall (
     val targs: List<Type>,
@@ -213,21 +176,14 @@ data class CtorCall (
     val args: List<Expr>,
     val body: List<Decl>?)
     : CNode(), Expr
-{
-    override fun children() = targs.nseq + type + args.nseq + body.nseq
-}
 
 data class ParenExpr (
     val expr: Expr)
     : CNode(), Expr
-{
-    override fun children() = nseq(expr)
-}
 
 abstract class UnaryExpression: CNode(), Expr
 {
     abstract val operand: Expr
-    override fun children() = nseq(operand)
 }
 
 data class MethodCall (
@@ -236,9 +192,6 @@ data class MethodCall (
     val name: String,
     val args: List<Expr>)
     : CNode(), Expr
-{
-    override fun children() = nseqN(op) + targs.nseq + args.nseq
-}
 
 data class DotIden (
     override val operand: Expr,
@@ -257,17 +210,11 @@ data class DotNew (
     override val operand: Expr,
     val ctor: CtorCall)
     : UnaryExpression()
-{
-    override fun children() = nseq(operand, ctor)
-}
 
 data class ArrayAccess (
     override val operand: Expr,
     val index: Expr)
     : UnaryExpression()
-{
-    override fun children() = nseq(operand, index)
-}
 
 data class PostIncrement (override val operand: Expr): UnaryExpression()
 data class PostDecrement (override val operand: Expr): UnaryExpression()
@@ -279,34 +226,22 @@ data class MaybeBoundMethodReference (
     val targs: List<Type>,
     val name: String)
     : CNode(), Expr
-{
-    override fun children() = type + targs.nseq
-}
 
 data class BoundMethodReference(
     val receiver: Expr,
     val targs: List<Type>,
     val name: String)
     : CNode(), Expr
-{
-    override fun children() = receiver + targs.nseq
-}
 
 data class NewReference (
     val type: Type,
     val targs: List<Type>)
     : CNode(), Expr
-{
-    override fun children() = type + targs.nseq
-}
 
 data class Cast (
     val types: List<Type>,
     override val operand: Expr)
     : UnaryExpression()
-{
-    override fun children() = types.nseq + operand
-}
 
 abstract class UnaryOp: UnaryExpression()
 
@@ -319,7 +254,6 @@ abstract class BinaryOp: CNode(), Expr
 {
     abstract val left: Expr
     abstract val right: Expr
-    override fun children() = nseq(left, right)
 }
 
 data class Product          (override val left: Expr, override val right: Expr): BinaryOp()
@@ -353,7 +287,6 @@ data class Instanceof(
     val type: Type)
     : CNode(), Expr
 {
-    override fun children() = nseq(op, type)
     override fun toString() = "instanceof"
 }
 
@@ -362,18 +295,12 @@ data class Ternary (
     val ifPart: Expr,
     val elsePart: Expr)
     : CNode(), Expr
-{
-    override fun children() = nseq(cond, ifPart, elsePart)
-}
 
 // NOTE: body can be an expression
 data class Lambda (
     val params: Parameters,
     val body: Stmt)
     : CNode(), Expr
-{
-    override fun children() = nseq(params, body)
-}
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------

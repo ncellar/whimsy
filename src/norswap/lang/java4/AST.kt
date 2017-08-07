@@ -52,7 +52,6 @@ data class ArrayType (
     val dims: Int)
     : CNode(), RefType
 {
-    override fun children() = nseq(stem)
     override fun toString() = "$stem[]"
 }
 
@@ -73,16 +72,10 @@ object This
 data class SuperCall (
     val args: List<Expr>)
     : CNode(), Expr
-{
-    override fun children() = args.nseq
-}
 
 data class ThisCall (
     val args: List<Expr>)
     : CNode(), Expr
-{
-    override fun children() = args.nseq
-}
 
 data class Identifier (
     val name: String)
@@ -91,16 +84,10 @@ data class Identifier (
 data class ClassExpr (
     val type: Type)
     : CNode(), Expr
-{
-    override fun children() = nseq(type)
-}
 
 data class ArrayInit (
     val items: List<Expr>)
     : CNode(), Expr
-{
-    override fun children() = items.nseq
-}
 
 data class ArrayCtorCall (
     val type: Type,
@@ -108,34 +95,22 @@ data class ArrayCtorCall (
     val dims: Int,
     val init: Expr?)
     : CNode(), Expr
-{
-    override fun children() = type + dim_exprs.nseq + nseqN(init)
-}
 
 data class CtorCall (
     val type: Type,
     val args: List<Expr>,
     val body: List<Decl>?)
     : CNode(), Expr
-{
-    override fun children() = type + args.nseq + body.nseq
-}
 
 data class ParenExpr (
     val expr: Expr)
     : CNode(), Expr
-{
-    override fun children() = nseq(expr)
-}
 
 data class MethodCall (
     val op: Expr?,
     val name: String,
     val args: List<Expr>)
     : CNode(), Expr
-{
-    override fun children() = nseqN(op) + args.nseq
-}
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
