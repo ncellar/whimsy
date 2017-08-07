@@ -5,10 +5,13 @@ import norswap.lang.java8.ast.ConstructorDecl
 import norswap.lang.java8.ast.CtorCall
 import norswap.lang.java8.ast.EnhancedFor
 import norswap.lang.java8.ast.EnumConstant
+import norswap.lang.java8.ast.File as AFile
 import norswap.lang.java8.ast.FormalParameters
+import norswap.lang.java8.ast.Identifier
 import norswap.lang.java8.ast.Import
 import norswap.lang.java8.ast.LabelledStmt
 import norswap.lang.java8.ast.MethodDecl
+import norswap.lang.java8.ast.Package as APackage
 import norswap.lang.java8.ast.TryStmt
 import norswap.lang.java8.ast.TypeDecl
 import norswap.lang.java8.ast.TypeParam
@@ -36,11 +39,33 @@ import norswap.uranium.java.model.source.TypedParameter
 import norswap.uranium.java.model.source.UntypedParameter
 import norswap.uranium.java.model.source.Variable
 import norswap.uranium.java.resolver
+import norswap.utils.cast
 import norswap.utils.multimap.append
 import java.util.ArrayDeque
 
 class ScopesBuilder
 {
+    // ---------------------------------------------------------------------------------------------
+
+    fun register_with (propagator: Propagator)
+    {
+        this.propagator = propagator
+        val b = this
+
+        propagator.apply {
+            visitor <AFile>         (b::visit_file)
+            visitor <APackage>      (b::visit_pkg)
+            visitor <Import>        (b::visit_import)
+        }
+    }
+
+    // ---------------------------------------------------------------------------------------------
+
+    private inline fun <reified T> Propagator.visitor (visitor: Any)
+    {
+        add_visitor<T>(visitor.cast())
+    }
+
     // ---------------------------------------------------------------------------------------------
 
     internal lateinit var propagator: Propagator
@@ -68,11 +93,13 @@ class ScopesBuilder
 
     // ---------------------------------------------------------------------------------------------
 
-    fun visit_file (node: norswap.lang.java8.ast.File, start: Boolean)
+    fun visit_file (node: AFile, start: Boolean)
     {
+        println("file visited: $start")
         if (start) {
             file = File(node, default_package)
             scopes.push(file)
+            propagator[node, "scope"] = file
         }
         else {
             scopes.pop()
@@ -81,8 +108,9 @@ class ScopesBuilder
 
     // ---------------------------------------------------------------------------------------------
 
-    fun visit_pkg (node: norswap.lang.java8.ast.Package, start: Boolean)
+    fun visit_pkg (node: APackage, start: Boolean)
     {
+        println("pkg visited: $start")
         if (!start) return
         file.pkg = Package(node)
     }
@@ -91,6 +119,7 @@ class ScopesBuilder
 
     fun visit_import (node: Import, start: Boolean)
     {
+        println("import visited: $start")
         if (!start) return
 
         val cano_name = node.name.joinToString(".")
@@ -164,11 +193,13 @@ class ScopesBuilder
     fun visit_ctor_call (node: CtorCall, start: Boolean)
     {
         if (node.body == null) return
-
-        if (start)
-            push_class(SourceClass(node, scope, index++))
-        else
+        if (!start) {
             pop_class()
+            return
+        }
+
+        val klass = SourceClass(node, scope, index++)
+        push_class(klass)
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -356,6 +387,14 @@ class ScopesBuilder
         val flow = ControlFlow(node, scope)
         scopes.push(flow)
         flow.variables[node.id.iden] = ForParameter(node)
+    }
+
+    // ---------------------------------------------------------------------------------------------
+
+    fun visit_identifier (node: Identifier, start: Boolean)
+    {
+        if (!start) return
+        propagator[node, "scope"] = scope
     }
 
     // ---------------------------------------------------------------------------------------------
