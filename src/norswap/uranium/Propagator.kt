@@ -62,6 +62,13 @@ class Propagator (val roots: List<Any>)
 
     // ---------------------------------------------------------------------------------------------
 
+    inline fun <reified T> add_visitor (noinline visitor: NodeVisitor)
+    {
+        visitors.append(T::class.java, visitor)
+    }
+
+    // ---------------------------------------------------------------------------------------------
+
     internal fun enqueue (reaction: Reaction)
     {
         queue.add(reaction)
@@ -101,7 +108,7 @@ class Propagator (val roots: List<Any>)
 
     // ---------------------------------------------------------------------------------------------
 
-    private fun set (attr: Attribute, value: Any?)
+    operator fun set (attr: Attribute, value: Any?)
     {
         if (value == null)
             store.remove(attr)
@@ -111,6 +118,23 @@ class Propagator (val roots: List<Any>)
         val consumers1 = consumers[attr] ?: return
         consumers1.forEach { it.satisfied(this, attr) }
     }
+
+    // ---------------------------------------------------------------------------------------------
+
+    operator fun set (node: Any, name: String, value: Any?)
+    {
+        set(Attribute(node, name), value)
+    }
+
+    // ---------------------------------------------------------------------------------------------
+
+    operator fun get (attr: Attribute): Any?
+        = store[attr]
+
+    // ---------------------------------------------------------------------------------------------
+
+    operator fun get (node: Any, name: String): Any?
+        = store[Attribute(node,name)]
 
     // ---------------------------------------------------------------------------------------------
 
