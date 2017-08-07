@@ -1019,7 +1019,7 @@ class Java8Grammar : TokenGrammar()
 
     override fun root() = build(
         syntax = { seq { whitespace() && maybe { package_decl() } && import_decls() && type_decls() } },
-        effect = { File(it(0), it(1), it(2)) })
+        effect = { File(input, it(0), it(1), it(2)) })
 
     /// ============================================================================================
 }

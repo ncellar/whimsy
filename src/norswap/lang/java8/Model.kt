@@ -1052,5 +1052,5 @@ class Java8Model
 
     val root
         = (!"whitespace" .. package_decl.maybe .. import_decls .. type_decls)
-        .build ("File(it(0), it(1), it(2))")
+        .build ("File(input, it(0), it(1), it(2))")
 }

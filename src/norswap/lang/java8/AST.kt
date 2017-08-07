@@ -615,6 +615,7 @@ data class ConstructorDecl (
 // Root --------------------------------------------------------------------------------------------
 
 data class File (
+    val input: ParseInput,
     val pkg: Package?,
     val imports: List<Import>,
     val typeDecls: List<Decl>)
