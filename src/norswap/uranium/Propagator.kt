@@ -23,11 +23,10 @@ class Propagator (val roots: List<Any>)
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * Maps a node to its children.
-     * Returns an empty set of children by default.
+     * A function that enables walking a tree.
+     * The function parameter is applied on all the children of the node passed as first parameter.
      */
-    var walker: (Any) -> List<Any>
-        = { emptyList() }
+    lateinit var walker: (Any, (Any) -> Unit) -> Unit
 
     // ---------------------------------------------------------------------------------------------
 

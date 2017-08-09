@@ -41,16 +41,23 @@ class File (val file: norswap.lang.java8.ast.File, var pkg: Package): Scope
     override fun toString(): String
     {
         val b = StringBuilder()
+        b += "{\n"
 
         if (pkg.pkg != null)
-            b += "package " + pkg.name
+            b += "  package " + pkg.name + "\n\n"
 
-        single_imports          .forEach { b += "import " + it.value + "\n" }
-        single_static_imports   .forEach { b += "import " + it.value + "\n" }
-        wildcard_imports        .forEach { b += "import " + it + "\n" }
-        wildcard_static_imports .forEach { b += "import " + it + "\n" }
+        single_imports          .forEach { b += "  import ${it.value}\n" }
+        single_static_imports   .forEach { b += "  import static ${it.value}\n" }
+        wildcard_imports        .forEach { b += "  import $it.*\n" }
+        wildcard_static_imports .forEach { b += "  import static $it.*\n" }
 
-        b += "{\n"
+        if ((single_imports          .size != 0 ||
+             single_static_imports   .size != 0 ||
+             wildcard_imports        .size != 0 ||
+             wildcard_static_imports .size != 0) &&
+             false) // TODO class storage
+                b += "\n"
+
         b += "}"
 
         return b.toString()

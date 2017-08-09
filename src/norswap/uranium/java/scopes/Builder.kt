@@ -95,7 +95,8 @@ class ScopesBuilder
 
     fun visit_file (node: AFile, start: Boolean)
     {
-        println("file visited: $start")
+        // if (start) println(node.input.name) // TODO
+        // println("file visited: $start") // TODO
         if (start) {
             file = File(node, default_package)
             scopes.push(file)
@@ -110,7 +111,7 @@ class ScopesBuilder
 
     fun visit_pkg (node: APackage, start: Boolean)
     {
-        println("pkg visited: $start")
+        // println("pkg visited: $start") // TODO
         if (!start) return
         file.pkg = Package(node)
     }
@@ -119,7 +120,7 @@ class ScopesBuilder
 
     fun visit_import (node: Import, start: Boolean)
     {
-        println("import visited: $start")
+        // println("import visited: $start") // TODO
         if (!start) return
 
         val cano_name = node.name.joinToString(".")

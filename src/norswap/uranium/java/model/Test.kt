@@ -2,11 +2,10 @@ package norswap.uranium.java.model
 import norswap.autumn.CaughtException
 import norswap.autumn.ParseInput
 import norswap.autumn.UncaughtException
-import norswap.lang.Node
 import norswap.lang.java8.Java8Grammar
 import norswap.lang.java8.ast.File
 import norswap.uranium.Propagator
-import norswap.uranium.java.java_walker
+import norswap.uranium.java.JavaWalker
 import norswap.uranium.java.scopes.ScopesBuilder
 import norswap.utils.cast
 import norswap.utils.glob
@@ -24,10 +23,11 @@ fun main (args: Array<String>)
             "D:/spring" // v21.8
 
     val paths = glob("**/*.java", Paths.get(corpus))
-    val ASTs = ArrayList<Node>()
+    val ASTs = ArrayList<File>()
 
-    val limit = 10
+    val limit = 40
     var i = 0
+    var time = System.currentTimeMillis()
 
     paths.forEach b@ {
         if (++i > limit) return@b
@@ -47,21 +47,29 @@ fun main (args: Array<String>)
         }
 
         val node = grammar.stack.peek() as File
-        if (node.imports.size != 0)
-            ASTs.add(grammar.stack.peek().cast())
+        if (node.pkg == null && node.imports.size == 0) -- i
+        else ASTs.add(node)
         grammar.reset()
     }
+
+    println("parse time: " + (System.currentTimeMillis() - time) / 1000.0)
+    time = System.currentTimeMillis()
 
     val propagator = Propagator(ASTs)
     val builder = ScopesBuilder()
 
-    propagator.walker = ::java_walker.cast()
+    propagator.walker = JavaWalker().cast()
 
     builder.register_with(propagator)
+
+    println("init time: " + (System.currentTimeMillis() - time) / 1000.0)
+    time = System.currentTimeMillis()
+
     propagator.propagate()
 
-    ASTs.map { propagator[it, "scope"] }
-        .forEach { println(it) }
+    println("propag time: " + (System.currentTimeMillis() - time) / 1000.0)
 
-    println("All done")
+    ASTs.forEach {
+        println("\n" + it.input.name + "\n" + propagator[it, "scope"])
+    }
 }
