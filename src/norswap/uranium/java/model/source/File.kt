@@ -1,4 +1,5 @@
 package norswap.uranium.java.model.source
+import norswap.uranium.java.model.Klass
 import norswap.uranium.java.model.Package
 import norswap.utils.plusAssign
 
@@ -38,6 +39,15 @@ class File (val file: norswap.lang.java8.ast.File, var pkg: Package): Scope
 
     // ---------------------------------------------------------------------------------------------
 
+    /**
+     * Maps simple class name to their associated type, for classes defined in the file.
+     *
+     * This is never actually useful for lookups (the relevant scope is the package).
+     */
+    val classes = HashMap<String, Klass>()
+
+    // ---------------------------------------------------------------------------------------------
+
     override fun toString(): String
     {
         val b = StringBuilder()
@@ -55,8 +65,10 @@ class File (val file: norswap.lang.java8.ast.File, var pkg: Package): Scope
              single_static_imports   .size != 0 ||
              wildcard_imports        .size != 0 ||
              wildcard_static_imports .size != 0) &&
-             false) // TODO class storage
+             classes.size != 0)
                 b += "\n"
+
+        classes.entries.forEach { (name, _) -> b +=  "  class $name\n" }
 
         b += "}"
 

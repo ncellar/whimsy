@@ -56,6 +56,7 @@ class ScopesBuilder
             visitor <AFile>         (b::visit_file)
             visitor <APackage>      (b::visit_pkg)
             visitor <Import>        (b::visit_import)
+            visitor <TypeDecl>      (b::visit_class)
         }
     }
 
@@ -121,7 +122,9 @@ class ScopesBuilder
     fun visit_import (node: Import, start: Boolean)
     {
         // println("import visited: $start") // TODO
-        if (!start) return
+        if (!start) {
+
+        }
 
         val cano_name = node.name.joinToString(".")
 
@@ -180,7 +183,10 @@ class ScopesBuilder
         val skope = scope
 
         when (skope) {
-            is File        -> skope.pkg.classes [node.name] = klass
+            is File        -> {
+                              skope.pkg.classes [node.name] = klass
+                              skope.classes     [node.name] = klass
+            }
             is SourceClass -> skope.klasses     [node.name] = klass
             is Block       -> skope.classes     [node.name] = klass
         }

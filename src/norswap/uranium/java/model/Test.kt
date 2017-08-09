@@ -6,6 +6,7 @@ import norswap.lang.java8.Java8Grammar
 import norswap.lang.java8.ast.File
 import norswap.uranium.Propagator
 import norswap.uranium.java.JavaWalker
+import norswap.uranium.java.resolution.Resolver
 import norswap.uranium.java.scopes.ScopesBuilder
 import norswap.utils.cast
 import norswap.utils.glob
@@ -56,10 +57,12 @@ fun main (args: Array<String>)
     time = System.currentTimeMillis()
 
     val propagator = Propagator(ASTs)
-    val builder = ScopesBuilder()
-
+    val resolver = Resolver()
+    propagator.attachment = resolver
+    resolver.propagator = propagator
     propagator.walker = JavaWalker().cast()
 
+    val builder = ScopesBuilder()
     builder.register_with(propagator)
 
     println("init time: " + (System.currentTimeMillis() - time) / 1000.0)
