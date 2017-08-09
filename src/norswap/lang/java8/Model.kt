@@ -282,7 +282,9 @@ class Java8Model
 
     val normal_annotation_suffix
         = annotation_element_pair.comma_list1.parens
-        .build (1, "NormalAnnotation(it(0), it.list<Pair<String, AnnotationElement>>(1))")
+        .build (1,
+            "val elements = it.list<Pair<String, AnnotationElement>>(1).unzip()\n" +
+            "NormalAnnotation(it(0), elements.first, elements.second)")
 
     val single_element_annotation_suffix
         = annotation_element.parens

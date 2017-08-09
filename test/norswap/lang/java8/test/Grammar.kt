@@ -150,13 +150,10 @@ class Grammar: GrammarFixture()
         success_expect("@Single(x)",
             SingleElementAnnotation(l("Single"), Identifier("x")))
         success_expect("@Pairs(x = @Marker)",
-            NormalAnnotation(l("Pairs"), l("x" to marker)))
+            NormalAnnotation(l("Pairs"), l("x"), l(marker)))
         success_expect("@Pairs(x = @Marker, y = $hairy, z = {@Marker, $hairy}, u = x)",
-            NormalAnnotation(l("Pairs"), l(
-                "x" to marker,
-                "y" to hyval,
-                "z" to AnnotationElementList(l(marker, hyval)),
-                "u" to Identifier("x"))))
+            NormalAnnotation(l("Pairs"), l("x", "y", "z", "u"),
+                l(marker, hyval, AnnotationElementList(l(marker, hyval)), Identifier("x"))))
 
         // TODO multipart annotation name
     }

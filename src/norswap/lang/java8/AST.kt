@@ -15,7 +15,8 @@ data class AnnotationElementList(
 
 data class NormalAnnotation (
     val name: List<String>,
-    val elems: List<Pair<String, AnnotationElement>>)
+    val elem_names: List<String>,
+    val elems: List<AnnotationElement>)
 : CNode(), Annotation
 
 data class MarkerAnnotation (

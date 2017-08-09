@@ -464,7 +464,8 @@ class Grammar2: TokenGrammar()
 
     fun normal_annotation_suffix() = build(1, 
         syntax = { parens { comma_list1 { annotation_element_pair() } } },
-        effect = { NormalAnnotation(it(0), it.list<Pair<String, AnnotationElement>>(1)) })
+        effect = { val elements = it.list<Pair<String, AnnotationElement>>(1).unzip()
+                   NormalAnnotation(it(0), elements.first, elements.second) })
 
     fun single_element_annotation_suffix() = build(1, 
         syntax = { parens { annotation_element() } },
