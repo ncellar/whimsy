@@ -128,32 +128,3 @@ class JavaWalker: (Node, (Node) -> Unit) -> Unit
 }
 
 // -------------------------------------------------------------------------------------------------
-
-// Original, 1000x slower code
-//fun java_walker (node: Node): List<Node>
-//{
-//    val children = ArrayList<Node>()
-//    val fields = node.javaClass.methods
-//
-//    // direct Node members
-//    fields
-//        .filter { it.returnType iz Node::class.java }
-//        .map { it.invoke(node) as Node? }
-//        .filterNotNull()
-//        .toCollection(children)
-//
-//    // Collection<Node> members
-//    fields
-//        .filter { it.genericReturnType iz NODE_COLLECTION }
-//        .map { it.invoke(node).cast<Collection<Node>?>() }
-//        .filterNotNull()
-//        .forEach { children.addAll(it) }
-//
-//    // List<Pair<Object, Node>> members
-//    fields
-//        .filter { it.genericReturnType iz pair_col }
-//        .flatMap { it.invoke(node).cast<List<Pair<*, Node>>>() }
-//        .mapTo (children) { it.second }
-//
-//    return children
-//}
