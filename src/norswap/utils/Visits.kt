@@ -138,6 +138,22 @@ fun <N, R> N.visit_around (walker: (N) -> List<N>, advice: Advice1<N, R>): R
 
 // -------------------------------------------------------------------------------------------------
 
+
+/**
+ * Visits the receiver with [advice], calling it both before and after visiting each node's children.
+ *
+ * Unlike the other variant, this variant has the walker takes a function that will be applied
+ * on all children. This avoid the needs to allocate memory to construct a list of children.
+ */
+fun <N, R> N.visit_around (walker: (N, (N) -> Unit) -> Unit, advice: Advice1<N, R>): R
+{
+    advice(this, true)
+    walker(this) { it.visit_around(walker, advice) }
+    return advice(this, false)
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /**
  * Visits the receiver, reducing it to a single value using [reducer].
  */
