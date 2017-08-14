@@ -25,11 +25,15 @@ fun internal_to_binary_name (name: String): String
 
 // -------------------------------------------------------------------------------------------------
 
-fun class_for(block: Block): SourceClass
+/**
+ * Returns the innermost class surrounding the passed block, or throws an error if the block
+ * is not nested within a class.
+ */
+fun class_for (block: Block): SourceClass
 {
     var scope: Scope = block
     while (scope !is SourceClass)
-        scope = scope.outer ?: throw Error("misnested block")
+        scope = scope.outer ?: throw Error("block is not nested within a class")
     return scope
 }
 
