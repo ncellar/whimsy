@@ -8,6 +8,7 @@ typealias AnyClass = Class<*>
 
 // -------------------------------------------------------------------------------------------------
 
+/** Type for AST node visitors, equivalent to `(Any, Boolean) -> Unit` */
 typealias NodeVisitor = Advice1<Any, Unit>
 
 // -------------------------------------------------------------------------------------------------

@@ -284,6 +284,7 @@ class ScopesBuilder (private val ctx: Context)
 
     fun visit_type_param (node: TypeParam, start: Boolean)
     {
+        if (!start) return
         klass.type_parameters[node.name] = SourceTypeParameter(node)
     }
 

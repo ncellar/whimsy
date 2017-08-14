@@ -10,14 +10,8 @@ class Propagator (val roots: List<Any>)
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * User-controlled field used to attach additional information to the propagator.
-     */
-    var attachment: Any = Any()
-
-    // ---------------------------------------------------------------------------------------------
-
-    /**
-     * Maps node types to visitor that want to visit them.
+     * - Maps node types to visitor that want to visit them.
+     * - Use [add_visitor] to add items from Kotlin.
      */
     val visitors = HashMultiMap<AnyClass, NodeVisitor>()
 
@@ -55,6 +49,9 @@ class Propagator (val roots: List<Any>)
 
     // ---------------------------------------------------------------------------------------------
 
+    /**
+     * Registers the given error for the current attribute derivation.
+     */
     fun report (error: UraniumError)
     {
         errors.add(error)
@@ -111,6 +108,9 @@ class Propagator (val roots: List<Any>)
 
     // ---------------------------------------------------------------------------------------------
 
+    /**
+     * Sets the value of the given attribute.
+     */
     operator fun set (attr: Attribute, value: Any?)
     {
         if (value == null)
@@ -124,6 +124,9 @@ class Propagator (val roots: List<Any>)
 
     // ---------------------------------------------------------------------------------------------
 
+    /**
+     * Sets the value of the attribute defined by [node] and [name].
+     */
     operator fun set (node: Any, name: String, value: Any?)
     {
         set(Attribute(node, name), value)
@@ -131,23 +134,31 @@ class Propagator (val roots: List<Any>)
 
     // ---------------------------------------------------------------------------------------------
 
+    /**
+     * Get the value of the given attribute.
+     */
     operator fun get (attr: Attribute): Any?
         = store[attr]
 
     // ---------------------------------------------------------------------------------------------
 
+    /**
+     * Get the value of the attribute defined by [node] and [name].
+     */
     operator fun get (node: Any, name: String): Any?
         = store[Attribute(node,name)]
 
     // ---------------------------------------------------------------------------------------------
 
+    /**
+     * Starts (or resumes) the derivations of attributes over the [roots] of the propagator.
+     */
     fun propagate()
     {
         initialize()
         while (queue.isNotEmpty())
         {
             val reaction = queue.remove()
-            reaction.propagator = this
             reaction.apply()
         }
     }

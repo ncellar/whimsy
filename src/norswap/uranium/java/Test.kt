@@ -57,7 +57,6 @@ fun main (args: Array<String>)
     val propagator = Propagator(ASTs)
     val context = Context(propagator)
 
-    propagator.attachment   = context // TODO needed?
     propagator.walker       = JavaWalker().cast()
 
     context.register_java8_scopes_builder()

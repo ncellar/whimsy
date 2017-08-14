@@ -1,5 +1,4 @@
 package norswap.uranium.java
-import norswap.uranium.Propagator
 import norswap.uranium.UraniumError
 import norswap.uranium.java.model.bytecode.BytecodeClass
 import norswap.uranium.java.model.Klass
