@@ -1,5 +1,6 @@
 package norswap.uranium.java
 import norswap.lang.Node
+import norswap.uranium.AnyClass
 import norswap.uranium.java.WalkerJavaSupport.invoke
 import norswap.utils.cast
 import norswap.utils.str
@@ -70,7 +71,7 @@ private val NODE_COLLECTION = GenericType(Collection::class.java, Node::class.ja
 /**
  * Stores compiled field accessors for a given [Node] subclass.
  */
-private class ClassData (lookup: MethodHandles.Lookup, klass: Class<*>)
+private class ClassData (lookup: MethodHandles.Lookup, klass: AnyClass)
 {
     val directs = ArrayList<NodeProvider>()
     val colls = ArrayList<CollProvider>()
@@ -108,7 +109,7 @@ private class ClassData (lookup: MethodHandles.Lookup, klass: Class<*>)
 class JavaWalker: (Node, (Node) -> Unit) -> Unit
 {
     private val lookup = MethodHandles.lookup()
-    private val cdatas = HashMap<Class<*>, ClassData>()
+    private val cdatas = HashMap<AnyClass, ClassData>()
 
     override fun invoke (node: Node, f: (Node) -> Unit)
     {

@@ -1,4 +1,5 @@
 package norswap.uranium.java
+import norswap.uranium.AnyClass
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.lang.reflect.TypeVariable
@@ -18,14 +19,14 @@ We also expose the GenericType class in order to construct ParameterizedType ins
 */
 // -------------------------------------------------------------------------------------------------
 
-private val ParameterizedType.raw_class: Class<*>
-    get() = rawType as Class<*>
+private val ParameterizedType.raw_class: AnyClass
+    get() = rawType as AnyClass
 
 // -------------------------------------------------------------------------------------------------
 
 infix fun Type.iz (type: Type) = when (this)
 {
-    is Class<*>          -> this iz type
+    is AnyClass          -> this iz type
     is ParameterizedType -> this iz type
     is TypeVariable<*>   -> this iz type
     else                 -> false
@@ -42,28 +43,28 @@ infix fun Type.hazn (type: Type)
 
 // -------------------------------------------------------------------------------------------------
 
-infix fun Type.iz (klass: Class<*>) = when (this)
+infix fun Type.iz (klass: AnyClass) = when (this)
 {
-    is Class<*>          -> this iz klass
+    is AnyClass          -> this iz klass
     is ParameterizedType -> this iz klass
     is TypeVariable<*>   -> this iz klass
     else                 -> false
 }
 
-infix fun Type.izn (klass: Class<*>)
+infix fun Type.izn (klass: AnyClass)
     = !(this iz klass)
 
-infix fun Type.haz (klass: Class<*>)
+infix fun Type.haz (klass: AnyClass)
     = klass iz this
 
-infix fun Type.hazn (klass: Class<*>)
+infix fun Type.hazn (klass: AnyClass)
     = !(klass iz this)
 
 // -------------------------------------------------------------------------------------------------
 
 infix fun Type.iz (type: ParameterizedType) = when (this)
 {
-    is Class<*>          -> this iz type
+    is AnyClass          -> this iz type
     is ParameterizedType -> this iz type
     is TypeVariable<*>   -> this iz type
     else                 -> false
@@ -97,55 +98,55 @@ infix fun Type.hazn (variable: TypeVariable<*>)
 
 // -------------------------------------------------------------------------------------------------
 
-infix fun Class<*>.iz (type: Type) = when (type)
+infix fun AnyClass.iz (type: Type) = when (type)
 {
-    is Class<*>          -> this iz type
+    is AnyClass          -> this iz type
     is ParameterizedType -> this iz type
     else                 -> false
 }
 
-infix fun Class<*>.izn (type: Type)
+infix fun AnyClass.izn (type: Type)
     = !(this iz type)
 
-infix fun Class<*>.haz (type: Type)
+infix fun AnyClass.haz (type: Type)
     = type iz this
 
-infix fun Class<*>.hazn (type: Type)
+infix fun AnyClass.hazn (type: Type)
     = !(type iz this)
 
 // -------------------------------------------------------------------------------------------------
 
-infix fun Class<*>.iz (klass: Class<*>)
+infix fun AnyClass.iz (klass: AnyClass)
     = klass.isAssignableFrom(this)
 
-infix fun Class<*>.izn (klass: Class<*>)
+infix fun AnyClass.izn (klass: AnyClass)
     = !(this iz klass)
 
-infix fun Class<*>.haz (klass: Class<*>)
+infix fun AnyClass.haz (klass: AnyClass)
     = klass iz this
 
-infix fun Class<*>.hazn (klass: Class<*>)
+infix fun AnyClass.hazn (klass: AnyClass)
     = !(klass iz this)
 
 // -------------------------------------------------------------------------------------------------
 
-infix fun Class<*>.iz (type: ParameterizedType)
+infix fun AnyClass.iz (type: ParameterizedType)
     = type.actualTypeArguments.size == 0 && this iz type.raw_class
 
-infix fun Class<*>.izn (type: ParameterizedType)
+infix fun AnyClass.izn (type: ParameterizedType)
     = !(this iz type)
 
-infix fun Class<*>.haz (type: ParameterizedType)
+infix fun AnyClass.haz (type: ParameterizedType)
     = type iz this
 
-infix fun Class<*>.hazn (type: ParameterizedType)
+infix fun AnyClass.hazn (type: ParameterizedType)
     = !(type iz this)
 
 // -------------------------------------------------------------------------------------------------
 
 infix fun TypeVariable<*>.iz (type: Type) = when (type)
 {
-    is Class<*>          -> this iz type
+    is AnyClass          -> this iz type
     is ParameterizedType -> this iz type
     is TypeVariable<*>   -> this iz type
     else                 -> false
@@ -176,10 +177,10 @@ infix fun TypeVariable<*>.hazn (variable: TypeVariable<*>)
 
 // -------------------------------------------------------------------------------------------------
 
-infix fun TypeVariable<*>.iz (klass: Class<*>): Boolean
+infix fun TypeVariable<*>.iz (klass: AnyClass): Boolean
     = this.bounds.any { it iz klass }
 
-infix fun TypeVariable<*>.izn (klass: Class<*>)
+infix fun TypeVariable<*>.izn (klass: AnyClass)
     = !(this iz klass)
 
 // -------------------------------------------------------------------------------------------------
@@ -194,7 +195,7 @@ infix fun TypeVariable<*>.izn (type: ParameterizedType)
 
 infix fun ParameterizedType.iz (type: Type) = when (type)
 {
-    is Class<*>          -> this iz type
+    is AnyClass          -> this iz type
     is ParameterizedType -> this iz type
     else                 -> false
 }
@@ -210,16 +211,16 @@ infix fun ParameterizedType.hazn (type: Type)
 
 // -------------------------------------------------------------------------------------------------
 
-infix fun ParameterizedType.iz (klass: Class<*>)
+infix fun ParameterizedType.iz (klass: AnyClass)
     = this.raw_class iz klass
 
-infix fun ParameterizedType.izn (klass: Class<*>)
+infix fun ParameterizedType.izn (klass: AnyClass)
     = !(this iz klass)
 
-infix fun ParameterizedType.haz (klass: Class<*>)
+infix fun ParameterizedType.haz (klass: AnyClass)
     = klass iz this
 
-infix fun ParameterizedType.hazn (klass: Class<*>)
+infix fun ParameterizedType.hazn (klass: AnyClass)
     = !(klass iz this)
 
 // -------------------------------------------------------------------------------------------------
@@ -228,8 +229,8 @@ infix fun ParameterizedType.iz (type: ParameterizedType): Boolean
 {
     val args1 = this.actualTypeArguments
     val args2 = type.actualTypeArguments
-    val raw1  = this.rawType as Class<*>
-    val raw2  = type.rawType as Class<*>
+    val raw1  = this.rawType as AnyClass
+    val raw2  = type.rawType as AnyClass
 
     if (args1.size == 0)
         return this.raw_class iz type
@@ -254,7 +255,7 @@ infix fun ParameterizedType.hazn (type: ParameterizedType)
 
 // -------------------------------------------------------------------------------------------------
 
-class GenericType (val raw: Class<*>, vararg val parameters: Type): Type, ParameterizedType
+class GenericType (val raw: AnyClass, vararg val parameters: Type): Type, ParameterizedType
 {
     override fun getRawType() = raw
     override fun getOwnerType() = null

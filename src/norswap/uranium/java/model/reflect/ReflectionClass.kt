@@ -1,4 +1,5 @@
 package norswap.uranium.java.model.reflect
+import norswap.uranium.AnyClass
 import norswap.uranium.java.model.Field
 import norswap.uranium.java.model.Klass
 import norswap.utils.multimap.MultiMap
@@ -7,7 +8,7 @@ import norswap.utils.multimap.multi_assoc
 import norswap.utils.rangeTo
 import java.lang.reflect.Modifier
 
-class ReflectionClass (val klass: Class<*>): Klass()
+class ReflectionClass (val klass: AnyClass): Klass()
 {
     // ---------------------------------------------------------------------------------------------
 
