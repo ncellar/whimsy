@@ -7,7 +7,6 @@ import norswap.lang.java8.ast.TypeDeclKind.ENUM
 import norswap.uranium.java.model.Field
 import norswap.uranium.java.model.Klass
 import norswap.uranium.java.model.Method
-import norswap.uranium.java.model.class_for
 import norswap.utils.cast
 import norswap.utils.multimap.HashMultiMap
 import norswap.utils.multimap.MultiMap
@@ -45,7 +44,7 @@ class SourceClass (val node: Node, override val outer: Scope, val index: Int): K
         binary_name = when (outer) {
             is File  -> outer.pkg.prefix + name
             is Klass -> outer.binary_name + "$" + name
-            is Block -> class_for(outer).binary_name + "$" + index + if (anonymous) "" else name
+            is Block -> outer.innermost_outer_class.binary_name + "$" + index + if (anonymous) "" else name
             else     -> throw Error("unknown scope type")
         }
     }

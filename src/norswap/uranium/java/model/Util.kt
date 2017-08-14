@@ -1,7 +1,4 @@
 package norswap.uranium.java.model
-import norswap.uranium.java.model.source.Block
-import norswap.uranium.java.model.source.Scope
-import norswap.uranium.java.model.source.SourceClass
 
 // -------------------------------------------------------------------------------------------------
 
@@ -22,19 +19,5 @@ fun binary_to_simple_name (name: String): String
  */
 fun internal_to_binary_name (name: String): String
     = name.replace('/', '.')
-
-// -------------------------------------------------------------------------------------------------
-
-/**
- * Returns the innermost class surrounding the passed block, or throws an error if the block
- * is not nested within a class.
- */
-fun class_for (block: Block): SourceClass
-{
-    var scope: Scope = block
-    while (scope !is SourceClass)
-        scope = scope.outer ?: throw Error("block is not nested within a class")
-    return scope
-}
 
 // -------------------------------------------------------------------------------------------------

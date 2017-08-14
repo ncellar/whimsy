@@ -19,4 +19,18 @@ class Block (val node: norswap.lang.java8.ast.Block, override val outer: Scope):
     val labels = HashMap<String, Int>()
 
     // ---------------------------------------------------------------------------------------------
+
+    /**
+     * Returns the innermost class surrounding the passed block, or throws an error if the block
+     * is not nested within a class (never happens in well formed java code).
+     */
+    val innermost_outer_class: SourceClass
+        get() {
+            var scope: Scope = this
+            while (scope !is SourceClass)
+                scope = scope.outer ?: throw Error("block is not nested within a class")
+            return scope
+        }
+
+    // ---------------------------------------------------------------------------------------------
 }
