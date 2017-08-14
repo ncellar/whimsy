@@ -1,6 +1,17 @@
 package norswap.uranium.java.model
 
 // -------------------------------------------------------------------------------------------------
+/*
+
+Suppose a nested class `my.package.MyClass.MyNestedClass`.
+
+It's *simple name* is:                  `MyNestedClass`
+It's *binary name* (Class#getName) is:  `my.package.MyClass$MyNestedClass`
+It's *canonical name* is:               `my.package.MyClass.MyNestedClass`
+It's *internal name* is:                `my/package/MyClass$MyNestedClass`
+
+ */
+// -------------------------------------------------------------------------------------------------
 
 /**
  * Returns the simple name corresponding to the given binary name, i.e. its last component.
