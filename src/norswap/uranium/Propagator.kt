@@ -1,4 +1,5 @@
 package norswap.uranium
+import norswap.utils.cast
 import norswap.utils.multimap.HashMultiMap
 import norswap.utils.multimap.append
 import norswap.utils.visit_around
@@ -61,9 +62,12 @@ class Propagator (val roots: List<Any>)
 
     // ---------------------------------------------------------------------------------------------
 
-    inline fun <reified T> add_visitor (noinline visitor: NodeVisitor)
+    /**
+     * Adds a [visitor] to the propagator. Should be a subtype of [NodeVisitor].
+     */
+    inline fun <reified T> add_visitor (visitor: Any)
     {
-        visitors.append(T::class.java, visitor)
+        visitors.append(T::class.java, visitor.cast<NodeVisitor>())
     }
 
     // ---------------------------------------------------------------------------------------------
