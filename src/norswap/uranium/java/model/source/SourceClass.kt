@@ -25,7 +25,7 @@ class SourceClass (val node: Node, override val outer: Scope, val index: Int): K
     // ---------------------------------------------------------------------------------------------
 
     override val name =
-        if (anonymous) decl.name else "" + index
+        if (!anonymous) decl.name else "" + index
 
     // ---------------------------------------------------------------------------------------------
 
