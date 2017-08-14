@@ -1,13 +1,11 @@
-package norswap.uranium.java.model
+package norswap.uranium.java
 import norswap.autumn.CaughtException
 import norswap.autumn.ParseInput
 import norswap.autumn.UncaughtException
 import norswap.lang.java8.Java8Grammar
 import norswap.lang.java8.ast.File
 import norswap.uranium.Propagator
-import norswap.uranium.java.JavaWalker
-import norswap.uranium.java.resolution.Resolver
-import norswap.uranium.java.scopes.ScopesBuilder
+import norswap.uranium.java.typing.register_java8_typing_rules
 import norswap.utils.cast
 import norswap.utils.glob
 import java.nio.file.Paths
@@ -57,13 +55,13 @@ fun main (args: Array<String>)
     time = System.currentTimeMillis()
 
     val propagator = Propagator(ASTs)
-    val resolver = Resolver()
-    propagator.attachment = resolver
-    resolver.propagator = propagator
-    propagator.walker = JavaWalker().cast()
+    val context = Context(propagator)
 
-    val builder = ScopesBuilder()
-    builder.register_with(propagator)
+    propagator.attachment   = context // TODO needed?
+    propagator.walker       = JavaWalker().cast()
+
+    context.register_java8_scopes_builder()
+    context.register_java8_typing_rules()
 
     println("init time: " + (System.currentTimeMillis() - time) / 1000.0)
     time = System.currentTimeMillis()
@@ -73,6 +71,14 @@ fun main (args: Array<String>)
     println("propag time: " + (System.currentTimeMillis() - time) / 1000.0)
 
     ASTs.forEach {
-        println("\n" + it.input.name + "\n" + propagator[it, "scope"])
+        val file_name = it.input.name
+        val scope = propagator[it, "scope"] as norswap.uranium.java.model.source.File
+        // println("\n$file_name\n${propagator[it, "scope"]}")
+        for (klass in scope.classes.values) {
+            println(klass.binary_name)
+            for (inner in klass.classes.values) {
+                println("  " + inner)
+            }
+        }
     }
 }

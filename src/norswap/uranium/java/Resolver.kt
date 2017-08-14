@@ -1,4 +1,4 @@
-package norswap.uranium.java.resolution
+package norswap.uranium.java
 import norswap.uranium.Propagator
 import norswap.uranium.UraniumError
 import norswap.uranium.java.model.bytecode.BytecodeClass
@@ -11,12 +11,8 @@ import java.net.URLClassLoader
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.tree.ClassNode
 
-class Resolver
+class Resolver (val context: Context)
 {
-    // ---------------------------------------------------------------------------------------------
-
-    lateinit var propagator: Propagator
-
     // ---------------------------------------------------------------------------------------------
 
     private val class_cache = HashMap<String, Klass>()
@@ -64,7 +60,7 @@ class Resolver
             return BytecodeClass(node)
         }
         catch (e: Exception) {
-            propagator.report(UraniumError("Could not load: $class_url"))
+            context.report(UraniumError("Could not load: $class_url"))
             return null
         }
     }

@@ -1,4 +1,4 @@
-package norswap.uranium.java.scopes
+package norswap.uranium.java
 import norswap.lang.java8.ast.AnnotationElemDecl
 import norswap.lang.java8.ast.CatchClause
 import norswap.lang.java8.ast.ConstructorDecl
@@ -17,6 +17,8 @@ import norswap.lang.java8.ast.TypeDecl
 import norswap.lang.java8.ast.TypeParam
 import norswap.lang.java8.ast.UntypedParameters
 import norswap.lang.java8.ast.VarDecl
+import norswap.lang.java8.ast.Block  as ASTBlock
+import norswap.lang.java8.ast.Lambda as ASTLambda
 import norswap.uranium.Propagator
 import norswap.uranium.java.model.Klass
 import norswap.uranium.java.model.Package
@@ -38,39 +40,44 @@ import norswap.uranium.java.model.source.TryParameter
 import norswap.uranium.java.model.source.TypedParameter
 import norswap.uranium.java.model.source.UntypedParameter
 import norswap.uranium.java.model.source.Variable
-import norswap.uranium.java.resolver
-import norswap.utils.cast
 import norswap.utils.multimap.append
 import java.util.ArrayDeque
 
-class ScopesBuilder
+// -------------------------------------------------------------------------------------------------
+
+fun Context.register_java8_scopes_builder()
 {
-    // ---------------------------------------------------------------------------------------------
+    propagator.register_java8_scopes_builder(ScopesBuilder(this))
+}
 
-    fun register_with (propagator: Propagator)
-    {
-        this.propagator = propagator
-        val b = this
+// -------------------------------------------------------------------------------------------------
 
-        propagator.apply {
-            visitor <AFile>         (b::visit_file)
-            visitor <APackage>      (b::visit_pkg)
-            visitor <Import>        (b::visit_import)
-            visitor <TypeDecl>      (b::visit_class)
-        }
-    }
+private fun Propagator.register_java8_scopes_builder (b: ScopesBuilder)
+{
+    add_visitor <AFile>             (b::visit_file)
+    add_visitor <APackage>          (b::visit_pkg)
+    add_visitor <Import>            (b::visit_import)
+    add_visitor <TypeDecl>          (b::visit_class)
+    add_visitor <CtorCall>          (b::visit_ctor_call)
+    add_visitor <ConstructorDecl>   (b::visit_ctor)
+    add_visitor <MethodDecl>        (b::visit_method)
+    add_visitor <VarDecl>           (b::visit_var)
+    add_visitor <TypeParam>         (b::visit_type_param)
+    add_visitor <ASTLambda>         (b::visit_lambda)
+    add_visitor <ASTBlock>          (b::visit_block)
+    add_visitor <EnumConstant>      (b::visit_enum_constant)
+    add_visitor <AnnotationElemDecl>(b::visit_annotation_elem)
+    add_visitor <LabelledStmt>      (b::visit_label)
+    add_visitor <CatchClause>       (b::visit_catch)
+    add_visitor <TryStmt>           (b::visit_try)
+    add_visitor <EnhancedFor>       (b::visit_enhanced_for)
+    add_visitor <Identifier>        (b::visit_identifier)
+}
 
-    // ---------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
 
-    private inline fun <reified T> Propagator.visitor (visitor: Any)
-    {
-        add_visitor<T>(visitor.cast())
-    }
-
-    // ---------------------------------------------------------------------------------------------
-
-    internal lateinit var propagator: Propagator
-
+class ScopesBuilder (private val ctx: Context)
+{
     // ---------------------------------------------------------------------------------------------
 
     private val default_package = Package(null)
@@ -101,7 +108,7 @@ class ScopesBuilder
         if (start) {
             file = File(node, default_package)
             scopes.push(file)
-            propagator[node, "scope"] = file
+            ctx.propagator[node, "scope"] = file
         }
         else {
             scopes.pop()
@@ -192,7 +199,7 @@ class ScopesBuilder
         }
 
         push_class(klass)
-        propagator.resolver.add_source_class(klass)
+        ctx.resolver.add_source_class(klass)
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -401,7 +408,7 @@ class ScopesBuilder
     fun visit_identifier (node: Identifier, start: Boolean)
     {
         if (!start) return
-        propagator[node, "scope"] = scope
+        ctx.propagator[node, "scope"] = scope
     }
 
     // ---------------------------------------------------------------------------------------------
