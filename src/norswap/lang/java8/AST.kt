@@ -284,8 +284,8 @@ data class Assign (
     : BinaryOp()
 
 data class Instanceof(
-    val op: Expr,
-    val type: Type)
+    val operand: Expr,
+    val dest: Type)
     : CNode(), Expr
 {
     override fun toString() = "instanceof"
