@@ -1,5 +1,4 @@
 package norswap.uranium.java.model.source
-import norswap.uranium.java.model.Klass
 import norswap.uranium.java.model.Package
 import norswap.utils.plusAssign
 
@@ -44,7 +43,7 @@ class File (val file: norswap.lang.java8.ast.File, var pkg: Package): Scope
      *
      * This is never actually useful for lookups (the relevant scope is the package).
      */
-    val classes = HashMap<String, Klass>()
+    val classes = HashMap<String, SourceClass>()
 
     // ---------------------------------------------------------------------------------------------
 
