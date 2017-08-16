@@ -49,6 +49,14 @@ class BytecodeClass (val node: ClassNode): Klass()
     // ---------------------------------------------------------------------------------------------
 
     /**
+     * The binary name of the outer class, if any, or null.
+     */
+    val outer_class: String?
+        = node.outerClass?.let(::internal_to_binary_name)
+
+    // ---------------------------------------------------------------------------------------------
+
+    /**
      * The binary names of the  implemented interfaces.
      */
     val superinterfaces: List<String>
