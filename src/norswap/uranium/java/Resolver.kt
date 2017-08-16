@@ -9,6 +9,7 @@ import java.net.URL
 import java.net.URLClassLoader
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.tree.ClassNode
+import java.nio.file.Paths
 
 class Resolver (val context: Context)
 {
@@ -22,7 +23,8 @@ class Resolver (val context: Context)
 
     // ---------------------------------------------------------------------------------------------
 
-    private val urls: Array<URL> = syscl.urLs
+    // TODO temporary
+    private val urls: Array<URL> = syscl.urLs + Paths.get("target/classes").toAbsolutePath().toUri().toURL()
 
     // ---------------------------------------------------------------------------------------------
 
@@ -50,11 +52,11 @@ class Resolver (val context: Context)
      * Load a class from the given URL, yielding a [BytecodeClass]. Returns null and registers
      * an error if the class fails to load.
      */
-    private fun load_from_url (class_url: URL): Klass?
+    private fun load_from_url (class_url: URL): BytecodeClass?
     {
         try {
             val node = ClassNode()
-            val reader = ClassReader(class_url.toString())
+            val reader = ClassReader(class_url.openStream())
             reader.accept(node, 0)
             return BytecodeClass(node)
         }
@@ -71,7 +73,7 @@ class Resolver (val context: Context)
      * is no class with the given name, or the class is found but fails to load (in which case an
      * error is also registered).
      */
-    private fun load_from_classfile (name: String): Klass?
+    private fun load_from_classfile (name: String): BytecodeClass?
     {
         return find_class_path(loader, name)
             ?. let { load_from_url(it) }
@@ -85,7 +87,7 @@ class Resolver (val context: Context)
      *
      * However it seems that sometimes these classes have associated class files in `rt.jar`.
      */
-    private fun load_reflectively (cano_name: String): Klass?
+    private fun load_reflectively (cano_name: String): ReflectionClass?
     {
         return (cano_name.startsWith("java.") || cano_name.startsWith("javax.")) .. {
             attempt { syscl.loadClass(cano_name) } ?. let(::ReflectionClass)
