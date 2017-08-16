@@ -91,8 +91,7 @@ class BytecodeClass (val node: ClassNode): Klass()
 
     // ---------------------------------------------------------------------------------------------
 
-    // TODO does this work for anonymous and local classes as well?
-
+    // NOTE(norswap): this works with anonymous and local classes as well
     override val classes: Map<String, String>
         = node.innerClasses.of<InnerClassNode>()
             .associate { it.name to binary_name + "$" + it.name}
