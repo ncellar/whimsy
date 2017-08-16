@@ -107,7 +107,7 @@ class BytecodeClass (val node: ClassNode): Klass()
     // ---------------------------------------------------------------------------------------------
 
     override val type_parameters: Map<String, BytecodeTypeParameter>
-        = parse_type_parameters(node.signature)
+        = node.signature?.let(::parse_type_parameters) ?: emptyMap()
 
     // ---------------------------------------------------------------------------------------------
 

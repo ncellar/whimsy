@@ -28,12 +28,15 @@ class BytecodeMethod (val node: MethodNode): Method()
     // ---------------------------------------------------------------------------------------------
 
     override val parameters: Map<String, BytecodeParameter>
-        = node.parameters.of<ParameterNode>().associate { it.name to BytecodeParameter(it) }
+        = node.parameters
+            ?.of<ParameterNode>()
+            ?.associate { it.name to BytecodeParameter(it) }
+            ?: emptyMap()
 
-        // ---------------------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------------------------
 
     override val type_params: Map<String, TypeParameter>
-        = parse_type_parameters(node.signature)
+        = node.signature?.let(::parse_type_parameters) ?: emptyMap()
 
     // ---------------------------------------------------------------------------------------------
 }
