@@ -19,15 +19,21 @@ class SourceClass (val node: Node, override val outer: Scope, val index: Int): K
     // ---------------------------------------------------------------------------------------------
 
     val anonymous  = node is CtorCall
+    val local      = !anonymous && index != 0
     val decl get() = node as TypeDecl
     val call get() = node as CtorCall
 
     // ---------------------------------------------------------------------------------------------
 
-    override val name =
-        if (!anonymous) decl.name else "" + index
+    override val name = when {
+        anonymous -> "$index"
+        local     -> "$index" + decl.name
+        else      -> decl.name
+    }
 
     // ---------------------------------------------------------------------------------------------
+
+    // TODO check and remove anonymous
 
     override val static =
         if (anonymous) false else decl.mods.contains(Keyword.static)
