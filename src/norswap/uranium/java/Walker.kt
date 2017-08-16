@@ -11,6 +11,7 @@ import java.lang.reflect.Method
 
 // ---------------------------------------------------------------------------------------------
 
+/** Interface for a node accessor. */
 @FunctionalInterface
 interface NodeProvider {
     fun apply (node: Node): Node?
@@ -18,8 +19,9 @@ interface NodeProvider {
 
 // ---------------------------------------------------------------------------------------------
 
+/** Interface for an accessor to a collection of nodes. */
 @FunctionalInterface
-interface CollProvider {
+interface NodeColProvider {
     fun apply (node: Node): Iterable<Node>?
 }
 
@@ -44,25 +46,25 @@ private fun lambda_direct (lookup: MethodHandles.Lookup, method: Method): NodePr
 // ---------------------------------------------------------------------------------------------
 
 /**
- * Converts an accessor for a collection of nodes ([method]) into a fast compiled [CollProvider].
+ * Converts an accessor for a collection of nodes ([method]) into a fast compiled [NodeColProvider].
  */
-private fun lambda_coll (lookup: MethodHandles.Lookup, method: Method): CollProvider
+private fun lambda_coll (lookup: MethodHandles.Lookup, method: Method): NodeColProvider
 {
     val handle = lookup.unreflect(method)
 
     val site = LambdaMetafactory.metafactory(
         lookup, "apply",
-        MethodType.methodType(CollProvider::class.java),
+        MethodType.methodType(NodeColProvider::class.java),
         MethodType.methodType(Iterable::class.java, Node::class.java),
         handle, handle.type())
 
-    return invoke(site.target) as CollProvider
+    return invoke(site.target) as NodeColProvider
 }
 
 // -------------------------------------------------------------------------------------------------
 
 /**
- * [Type] instance described a collection of nodes.
+ * [java.lang.reflect.Type] instance describing a collection of nodes.
  */
 private val NODE_COLLECTION = GenericType(Collection::class.java, Node::class.java)
 
@@ -74,7 +76,7 @@ private val NODE_COLLECTION = GenericType(Collection::class.java, Node::class.ja
 private class ClassData (lookup: MethodHandles.Lookup, klass: AnyClass)
 {
     val directs = ArrayList<NodeProvider>()
-    val colls = ArrayList<CollProvider>()
+    val colls = ArrayList<NodeColProvider>()
 
     init {
         for (field in klass.methods) // methods, because kotlin generates setters
