@@ -129,7 +129,7 @@ fun <X, K, V> Array<X>.multi_assoc (f: (X) -> Pair<K, V>): HashMultiMap<K, V>
 fun <X, K, V> Iterable<X>.multi_assoc_not_null (f: (X) -> Pair<K, V>?): HashMultiMap<K, V>
 {
     val out = HashMultiMap<K, V>()
-    forEach { f(it).inn { (k, v) -> out.append(k, v) } }
+    forEach { f(it)?.let { (k, v) -> out.append(k, v) } }
     return out
 }
 
@@ -141,7 +141,7 @@ fun <X, K, V> Iterable<X>.multi_assoc_not_null (f: (X) -> Pair<K, V>?): HashMult
 fun <X, K, V> Array<X>.multi_assoc_not_null (f: (X) -> Pair<K, V>?): HashMultiMap<K, V>
 {
     val out = HashMultiMap<K, V>()
-    forEach { f(it).inn { (k, v) -> out.append(k, v) } }
+    forEach { f(it)?.let { (k, v) -> out.append(k, v) } }
     return out
 }
 

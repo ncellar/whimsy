@@ -70,14 +70,6 @@ inline fun <reified T, R> Any?.when_is (f: (T) -> R): R?
 // -------------------------------------------------------------------------------------------------
 
 /**
- * Applies [f] to the receiver if it is non-null, else return null.
- */
-inline fun <T: Any, R: Any> T?.inn (f: (T) -> R): R?
-    = if (this != null) f(this) else null
-
-// -------------------------------------------------------------------------------------------------
-
-/**
  * Tries to run [f], returning its return value if successful and null if an exception is thrown.
  */
 inline fun <T: Any> attempt (f: () -> T): T?
