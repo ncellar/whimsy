@@ -76,3 +76,11 @@ inline fun <T: Any> attempt (f: () -> T): T?
     = try { f() } catch (_: Exception) { null }
 
 // -------------------------------------------------------------------------------------------------
+
+/**
+ * Tries to run [f], return true if it runs without throwing an exception, false otherwise.
+ */
+inline fun doesnt_throw (f: () -> Unit): Boolean
+    = try { f() ; true } catch (_: Exception) { false }
+
+// -------------------------------------------------------------------------------------------------
