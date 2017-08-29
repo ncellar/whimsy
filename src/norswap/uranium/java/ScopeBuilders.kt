@@ -226,7 +226,7 @@ class ScopesBuilder (private val ctx: Context)
         scopes.push(ctor)
 
         node.tparams.forEach {
-            ctor.type_params[it.name] = it
+            ctor.type_params[it.name] = SourceTypeParameter(it)
         }
 
         node.params.params.forEach {
