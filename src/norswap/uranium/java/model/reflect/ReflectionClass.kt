@@ -1,5 +1,6 @@
 package norswap.uranium.java.model.reflect
 import norswap.uranium.AnyClass
+import norswap.uranium.java.Context
 import norswap.uranium.java.model.Field
 import norswap.uranium.java.model.Klass
 import norswap.utils.multimap.MultiMap
@@ -22,13 +23,38 @@ class ReflectionClass (val klass: AnyClass): Klass()
 
     // ---------------------------------------------------------------------------------------------
 
-    override val static
-        = Modifier.isStatic(klass.modifiers)
+    override val is_nested
+        get() = klass.enclosingClass != null
 
     // ---------------------------------------------------------------------------------------------
 
-    override val enum
-        = klass.isEnum
+    override val static
+        get() = Modifier.isStatic(klass.modifiers)
+
+    // ---------------------------------------------------------------------------------------------
+
+    override val is_enum
+        get() = klass.isEnum
+
+    // ---------------------------------------------------------------------------------------------
+
+    override val is_interface
+        get() = klass.isInterface
+
+    // ---------------------------------------------------------------------------------------------
+
+    override val is_annotation
+        get() = klass.isAnnotation
+
+    // ---------------------------------------------------------------------------------------------
+
+    override val is_local
+        get() = klass.isLocalClass
+
+    // ---------------------------------------------------------------------------------------------
+
+    override val is_anonymous
+        get() = klass.isAnonymousClass
 
     // ---------------------------------------------------------------------------------------------
 
@@ -83,7 +109,37 @@ class ReflectionClass (val klass: AnyClass): Klass()
     // ---------------------------------------------------------------------------------------------
 
     override val enum_constants: Map<String, Field>?
-        get() = enum .. { fields.filterValues { it.field.isEnumConstant } }
+        get() = is_enum.. { fields.filterValues { it.field.isEnumConstant } }
+
+    // ---------------------------------------------------------------------------------------------
+
+    // BELOW
+    // - We never wrap Class<*> in a ReflectionClass directly, instead we go through the resolver
+    //   to ensure the classes are unique.
+    // - Failure to resolve should normally never occur for reflection-loaded classes, but you
+    //   never know.
+
+    // ---------------------------------------------------------------------------------------------
+
+    override fun superclass (ctx: Context): Klass
+        =  ctx.resolver.load_superclass(klass.superclass.name, binary_name)
+
+    // ---------------------------------------------------------------------------------------------
+
+    override fun superinterfaces (ctx: Context): List<Klass>
+    {
+        val list = ArrayList<Klass>()
+        klass.interfaces.forEach {
+            ctx.resolver.load_superinterface(it.name, binary_name)
+                ?. let { list.add(it) }
+        }
+        return list
+    }
+
+    // ---------------------------------------------------------------------------------------------
+
+    override fun outer_class (ctx: Context): Klass?
+        = klass.enclosingClass?.let { ctx.resolver.load_outer_class(it.name, binary_name) }
 
     // ---------------------------------------------------------------------------------------------
 }

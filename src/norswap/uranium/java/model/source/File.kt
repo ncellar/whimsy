@@ -1,5 +1,8 @@
 package norswap.uranium.java.model.source
+import norswap.uranium.java.Context
 import norswap.uranium.java.model.Package
+import norswap.uranium.java.types.ClassType
+import norswap.uranium.java.types.RefType
 import norswap.utils.plusAssign
 
 class File (val file: norswap.lang.java8.ast.File, var pkg: Package): Scope
@@ -44,6 +47,19 @@ class File (val file: norswap.lang.java8.ast.File, var pkg: Package): Scope
      * This is never actually useful for lookups (the relevant scope is the package).
      */
     val classes = HashMap<String, SourceClass>()
+
+    // ---------------------------------------------------------------------------------------------
+
+    override fun get_type (name: String, ctx: Context): RefType?
+    {
+        classes[name]?.let { return ClassType(it) }
+
+        val klass_name = single_imports[name] ?: single_static_imports[name]
+
+        return klass_name
+            ?. let { ctx.resolver.load_class(it) }
+            ?. let { ClassType(it) }
+    }
 
     // ---------------------------------------------------------------------------------------------
 

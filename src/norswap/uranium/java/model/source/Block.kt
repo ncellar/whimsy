@@ -1,15 +1,19 @@
 package norswap.uranium.java.model.source
+import norswap.uranium.java.Context
+import norswap.uranium.java.model.Data
 import norswap.uranium.java.model.Klass
+import norswap.uranium.java.types.ClassType
+import norswap.uranium.java.types.RefType
 
 class Block (val node: norswap.lang.java8.ast.Block, override val outer: Scope): Scope
 {
     // ---------------------------------------------------------------------------------------------
 
-    val variables =  HashMap<String, Variable>()
+    val variables = HashMap<String, Variable>()
 
     // ---------------------------------------------------------------------------------------------
 
-    val classes =  HashMap<String, Klass>()
+    val classes = HashMap<String, Klass>()
 
     // ---------------------------------------------------------------------------------------------
 
@@ -31,6 +35,17 @@ class Block (val node: norswap.lang.java8.ast.Block, override val outer: Scope):
                 scope = scope.outer ?: throw Error("block is not nested within a class")
             return scope
         }
+
+     // ---------------------------------------------------------------------------------------------
+
+    override fun get_type (name: String, ctx: Context): RefType?
+        = classes[name]?.let { ClassType(it) }
+
+    override fun get_data (name: String): Data?
+        = variables[name]
+
+    override fun get_label (name: String): Int?
+        = labels[name]
 
     // ---------------------------------------------------------------------------------------------
 }

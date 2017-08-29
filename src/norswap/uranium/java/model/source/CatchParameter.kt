@@ -1,4 +1,5 @@
 package norswap.uranium.java.model.source
+
 import norswap.lang.java8.ast.CatchClause
 import norswap.uranium.java.model.Data
 

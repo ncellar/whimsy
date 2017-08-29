@@ -1,16 +1,20 @@
 package norswap.uranium.java.model.bytecode
+import norswap.uranium.java.Context
 import norswap.uranium.java.model.Constructor
 import norswap.uranium.java.model.binary_to_simple_name
 import norswap.uranium.java.model.Klass
 import norswap.uranium.java.model.internal_to_binary_name
 import norswap.uranium.java.model.bytecode.sig.parse_type_parameters
 import norswap.utils.cast
+import norswap.utils.doesnt_throw
 import norswap.utils.multimap.MultiMap
 import norswap.utils.multimap.flat_filter_values
 import norswap.utils.multimap.multi_assoc_not_null
 import norswap.utils.rangeTo
+import org.objectweb.asm.Opcodes.ACC_ANNOTATION
 import org.objectweb.asm.Opcodes.ACC_ENUM
 import org.objectweb.asm.Opcodes.ACC_STATIC
+import org.objectweb.asm.Opcodes.ACC_INTERFACE
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.InnerClassNode
@@ -30,13 +34,38 @@ class BytecodeClass (val node: ClassNode): Klass()
 
     // ---------------------------------------------------------------------------------------------
 
-    override val static
-        = node.access and ACC_STATIC != 0
+    override val is_nested
+        get() = node.outerClass != null
 
     // ---------------------------------------------------------------------------------------------
 
-    override val enum
-        = node.access and ACC_ENUM != 0
+    override val static
+        get() = node.access and ACC_STATIC != 0
+
+    // ---------------------------------------------------------------------------------------------
+
+    override val is_enum
+        get() = node.access and ACC_ENUM != 0
+
+    // ---------------------------------------------------------------------------------------------
+
+    override val is_interface
+        get() = node.access and ACC_INTERFACE != 0
+
+    // ---------------------------------------------------------------------------------------------
+
+    override val is_annotation
+        get() = node.access and ACC_ANNOTATION != 0
+
+    // ---------------------------------------------------------------------------------------------
+
+    override val is_local
+        get() = node.outerMethod != null && !is_anonymous
+
+    // ---------------------------------------------------------------------------------------------
+
+    override val is_anonymous
+        get() = doesnt_throw { name.toInt() }
 
     // ---------------------------------------------------------------------------------------------
 
@@ -119,7 +148,29 @@ class BytecodeClass (val node: ClassNode): Klass()
     // ---------------------------------------------------------------------------------------------
 
     override val enum_constants: Map<String, BytecodeField>?
-        = enum .. { static_fields.filterValues { it.node.access and ACC_ENUM != 0 } }
+        = is_enum.. { static_fields.filterValues { it.node.access and ACC_ENUM != 0 } }
+
+    // ---------------------------------------------------------------------------------------------
+
+    override fun superclass (ctx: Context): Klass
+        =  ctx.resolver.load_superclass(superclass, binary_name)
+
+    // ---------------------------------------------------------------------------------------------
+
+    override fun superinterfaces (ctx: Context): List<Klass>
+    {
+        val list = ArrayList<Klass>()
+        superinterfaces.forEach {
+            ctx.resolver.load_superinterface(it, binary_name)
+                ?. let { list.add(it) }
+        }
+        return list
+    }
+
+    // ---------------------------------------------------------------------------------------------
+
+    override fun outer_class (ctx: Context): Klass?
+        = outer_class?.let { ctx.resolver.load_outer_class(it, binary_name) }
 
     // ---------------------------------------------------------------------------------------------
 }

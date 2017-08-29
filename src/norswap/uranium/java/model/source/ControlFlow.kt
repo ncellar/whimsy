@@ -7,5 +7,14 @@ import norswap.uranium.java.model.Data
  */
 class ControlFlow (val node: Node, override val outer: Scope): Scope
 {
+    // ---------------------------------------------------------------------------------------------
+
     val variables = HashMap<String, Data>()
+
+    // ---------------------------------------------------------------------------------------------
+
+    override fun get_data (name: String): Data?
+        = variables[name]
+
+    // ---------------------------------------------------------------------------------------------
 }
