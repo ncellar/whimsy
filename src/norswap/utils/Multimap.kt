@@ -1,8 +1,6 @@
 @file:Suppress("PackageDirectoryMismatch")
 package norswap.utils.multimap
 
-import norswap.utils.inn
-
 // -------------------------------------------------------------------------------------------------
 /*
 
