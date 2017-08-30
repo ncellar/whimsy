@@ -76,7 +76,7 @@ private fun Propagator.register_java8_typing_rules (ctx: Context)
 // -------------------------------------------------------------------------------------------------
 
 private fun Context.typing
-    (node: Node, _name: String, vararg _consumed: Attribute, _apply: () -> Unit)
+    (node: Node, _name: String, vararg _consumed: Attribute, _apply: (Reaction) -> Unit)
 {
     val reaction = Reaction {
         name = _name
@@ -90,7 +90,7 @@ private fun Context.typing
 
 // -------------------------------------------------------------------------------------------------
 
-private fun Context.checking (_name: String, vararg _consumed: Attribute, _apply: () -> Unit)
+private fun Context.checking (_name: String, vararg _consumed: Attribute, _apply: (Reaction) -> Unit)
 {
     val reaction = Reaction {
         name = _name

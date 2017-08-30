@@ -159,7 +159,7 @@ class Propagator (val roots: List<Any>)
         while (queue.isNotEmpty())
         {
             val reaction = queue.remove()
-            reaction.apply()
+            reaction.apply(reaction)
         }
     }
 
