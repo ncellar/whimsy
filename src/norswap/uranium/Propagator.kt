@@ -49,11 +49,17 @@ class Propagator (val roots: List<Any>)
 
     // ---------------------------------------------------------------------------------------------
 
+    private var target_attrs = emptyList<Attribute>()
+
+    // ---------------------------------------------------------------------------------------------
+
     /**
      * Registers the given error for the current attribute derivation.
      */
     fun report (error: UraniumError)
     {
+        if (error.attrs == null)
+            error.attrs = target_attrs
         errors.add(error)
     }
 
@@ -65,6 +71,13 @@ class Propagator (val roots: List<Any>)
     inline fun <reified T> add_visitor (visitor: Any)
     {
         visitors.append(T::class.java, visitor.cast<NodeVisitor>())
+    }
+
+    // ---------------------------------------------------------------------------------------------
+
+    fun set_target_attrs (attrs: List<Attribute>)
+    {
+        target_attrs = attrs
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -159,8 +172,10 @@ class Propagator (val roots: List<Any>)
         while (queue.isNotEmpty())
         {
             val reaction = queue.remove()
+            set_target_attrs(reaction.supplied)
             reaction.apply(reaction)
         }
+        set_target_attrs(emptyList())
     }
 
     // ---------------------------------------------------------------------------------------------
