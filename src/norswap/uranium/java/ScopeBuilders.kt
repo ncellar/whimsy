@@ -119,15 +119,14 @@ class ScopesBuilder (private val ctx: Context)
     {
         if (!start) return
         file.pkg = Package(node)
+        ctx.reactor[node, "scope"] = file.pkg
     }
 
     // ---------------------------------------------------------------------------------------------
 
     fun visit_import (node: Import, start: Boolean)
     {
-        if (!start) {
-
-        }
+        if (!start) return
 
         val cano_name = node.name.joinToString(".")
 
@@ -195,6 +194,7 @@ class ScopesBuilder (private val ctx: Context)
 
         push_class(klass)
         ctx.resolver.add_source_class(klass)
+        ctx.reactor[node, "scope"] = klass
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -209,6 +209,8 @@ class ScopesBuilder (private val ctx: Context)
 
         val klass = SourceClass(node, scope, index++)
         push_class(klass)
+        ctx.resolver.add_source_class(klass)
+        ctx.reactor[node, "scope"] = klass
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -222,7 +224,6 @@ class ScopesBuilder (private val ctx: Context)
 
         val ctor = SourceConstructor(node, scope)
         klass.constructors += ctor
-        scopes.push(ctor)
 
         node.tparams.forEach {
             ctor.type_params[it.name] = SourceTypeParameter(it)
@@ -231,6 +232,9 @@ class ScopesBuilder (private val ctx: Context)
         node.params.params.forEach {
             ctor.parameters[it.name] = TypedParameter(it)
         }
+
+        scopes.push(ctor)
+        ctx.reactor[node, "scope"] = ctor
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -244,7 +248,6 @@ class ScopesBuilder (private val ctx: Context)
 
         val method = SourceMethod(node, klass)
         klass.methods.append(node.name, method)
-        scopes.push(method)
 
         node.tparams.forEach {
             method.type_params[it.name] = SourceTypeParameter(it)
@@ -253,6 +256,9 @@ class ScopesBuilder (private val ctx: Context)
         node.params.params.forEach {
             method.parameters[it.name] = TypedParameter(it)
         }
+
+        scopes.push(method)
+        ctx.reactor[node, "scope"] = method
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -306,6 +312,7 @@ class ScopesBuilder (private val ctx: Context)
         }
 
         scopes.push(lambda)
+        ctx.reactor[node, "scope"] = lambda
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -319,6 +326,7 @@ class ScopesBuilder (private val ctx: Context)
 
         val block = Block(node, scope)
         scopes.push(block)
+        ctx.reactor[node, "scope"] = block
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -364,8 +372,9 @@ class ScopesBuilder (private val ctx: Context)
         }
 
         val flow = ControlFlow(node, scope)
-        scopes.push(flow)
         flow.variables[node.id.iden] = CatchParameter(node)
+        scopes.push(flow)
+        ctx.reactor[node, "scope"] = flow
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -378,11 +387,13 @@ class ScopesBuilder (private val ctx: Context)
         }
 
         val flow = ControlFlow(node, scope)
-        scopes.push(flow)
 
         node.resources.forEach {
             flow.variables[it.id.iden] = TryParameter(it)
         }
+
+        scopes.push(flow)
+        ctx.reactor[node, "scope"] = flow
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -395,8 +406,9 @@ class ScopesBuilder (private val ctx: Context)
         }
 
         val flow = ControlFlow(node, scope)
-        scopes.push(flow)
         flow.variables[node.id.iden] = ForParameter(node)
+        scopes.push(flow)
+        ctx.reactor[node, "scope"] = flow
     }
 
     // ---------------------------------------------------------------------------------------------
