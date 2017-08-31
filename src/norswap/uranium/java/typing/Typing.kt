@@ -84,7 +84,7 @@ private fun Context.typing
         apply = _apply
     }
 
-    reactor.enqueue(reaction)
+    reactor.register(reaction)
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -97,7 +97,7 @@ private fun Context.checking (_name: String, vararg _consumed: Attribute, _apply
         apply = _apply
     }
 
-    reactor.enqueue(reaction)
+    reactor.register(reaction)
 }
 
 // -------------------------------------------------------------------------------------------------
