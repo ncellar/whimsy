@@ -1,7 +1,7 @@
 package norswap.uranium.java
 import norswap.lang.Node
 import norswap.uranium.Attribute
-import norswap.uranium.Propagator
+import norswap.uranium.Reactor
 import norswap.uranium.UraniumError
 import norswap.uranium.java.types.ClassType
 import norswap.uranium.java.types.Type
@@ -10,7 +10,7 @@ import norswap.utils.cast
 /**
  * Context for a typing / name resolution job.
  */
-class Context (val propagator: Propagator)
+class Context (val reactor: Reactor)
 {
     // ---------------------------------------------------------------------------------------------
 
@@ -20,25 +20,25 @@ class Context (val propagator: Propagator)
 
     fun report (error: UraniumError)
     {
-        propagator.report(error)
+        reactor.report(error)
     }
 
     // ---------------------------------------------------------------------------------------------
 
     fun report (msg: String)
     {
-        propagator.report(UraniumError(msg))
+        reactor.report(UraniumError(msg))
     }
 
     // ---------------------------------------------------------------------------------------------
 
     operator fun <T> Node.get (name: String): T
-        = propagator[this, name].cast()
+        = reactor[this, name].cast()
 
     // ---------------------------------------------------------------------------------------------
 
     operator fun Node.set (name: String, value: Any)
-        { propagator[this, name] = value }
+        { reactor[this, name] = value }
 
     // ---------------------------------------------------------------------------------------------
 
@@ -48,8 +48,8 @@ class Context (val propagator: Propagator)
     // ---------------------------------------------------------------------------------------------
 
     var Node.type: Type
-        get() = propagator[this, "type"].cast()
-        set(value) { propagator[this, "type"] = value }
+        get() = reactor[this, "type"].cast()
+        set(value) { reactor[this, "type"] = value }
 
     // ---------------------------------------------------------------------------------------------
 

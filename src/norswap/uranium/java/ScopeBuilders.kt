@@ -19,7 +19,7 @@ import norswap.lang.java8.ast.UntypedParameters
 import norswap.lang.java8.ast.VarDecl
 import norswap.lang.java8.ast.Block  as ASTBlock
 import norswap.lang.java8.ast.Lambda as ASTLambda
-import norswap.uranium.Propagator
+import norswap.uranium.Reactor
 import norswap.uranium.java.model.Klass
 import norswap.uranium.java.model.Package
 import norswap.uranium.java.model.source.Block
@@ -47,12 +47,12 @@ import java.util.ArrayDeque
 
 fun Context.register_java8_scopes_builder()
 {
-    propagator.register_java8_scopes_builder(ScopesBuilder(this))
+    reactor.register_java8_scopes_builder(ScopesBuilder(this))
 }
 
 // -------------------------------------------------------------------------------------------------
 
-private fun Propagator.register_java8_scopes_builder (b: ScopesBuilder)
+private fun Reactor.register_java8_scopes_builder (b: ScopesBuilder)
 {
     add_visitor <AFile>             (b::visit_file)
     add_visitor <APackage>          (b::visit_pkg)
@@ -106,7 +106,7 @@ class ScopesBuilder (private val ctx: Context)
         if (start) {
             file = File(node, default_package)
             scopes.push(file)
-            ctx.propagator[node, "scope"] = file
+            ctx.reactor[node, "scope"] = file
         }
         else {
             scopes.pop()
@@ -405,7 +405,7 @@ class ScopesBuilder (private val ctx: Context)
     fun visit_identifier (node: Identifier, start: Boolean)
     {
         if (!start) return
-        ctx.propagator[node, "scope"] = scope
+        ctx.reactor[node, "scope"] = scope
     }
 
     // ---------------------------------------------------------------------------------------------

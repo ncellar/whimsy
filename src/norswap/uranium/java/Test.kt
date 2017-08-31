@@ -4,7 +4,7 @@ import norswap.autumn.ParseInput
 import norswap.autumn.UncaughtException
 import norswap.lang.java8.Java8Grammar
 import norswap.lang.java8.ast.File
-import norswap.uranium.Propagator
+import norswap.uranium.Reactor
 import norswap.uranium.java.typing.register_java8_typing_rules
 import norswap.utils.cast
 import norswap.utils.glob
@@ -54,7 +54,7 @@ fun main (args: Array<String>)
     println("parse time: " + (System.currentTimeMillis() - time) / 1000.0)
     time = System.currentTimeMillis()
 
-    val propagator = Propagator(ASTs)
+    val propagator = Reactor(ASTs)
     val context = Context(propagator)
 
     propagator.walker       = JavaWalker().cast()
@@ -65,7 +65,7 @@ fun main (args: Array<String>)
     println("init time: " + (System.currentTimeMillis() - time) / 1000.0)
     time = System.currentTimeMillis()
 
-    propagator.propagate()
+    propagator.start()
 
     println("propag time: " + (System.currentTimeMillis() - time) / 1000.0)
 

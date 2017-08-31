@@ -59,7 +59,7 @@ class Reaction private constructor()
 
     // ---------------------------------------------------------------------------------------------
 
-    internal fun satisfied (propagator: Propagator, attr: Attribute)
+    internal fun satisfied (reactor: Reactor, attr: Attribute)
     {
         val i = consumed.indexOf(attr)
         if (!satisfied[i]) {
@@ -67,7 +67,7 @@ class Reaction private constructor()
             satisfied[i] = true
         }
         if (nsatisfied == consumed.size)
-            propagator.enqueue(this)
+            reactor.enqueue(this)
     }
 
     // ---------------------------------------------------------------------------------------------

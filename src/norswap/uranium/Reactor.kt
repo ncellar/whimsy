@@ -5,7 +5,7 @@ import norswap.utils.multimap.append
 import norswap.utils.visit_around
 import java.util.ArrayDeque
 
-class Propagator (val roots: List<Any>)
+class Reactor (val roots: List<Any>)
 {
     // ---------------------------------------------------------------------------------------------
 
@@ -166,7 +166,7 @@ class Propagator (val roots: List<Any>)
     /**
      * Starts (or resumes) the derivations of attributes over the [roots] of the propagator.
      */
-    fun propagate()
+    fun start()
     {
         initialize()
         while (queue.isNotEmpty())

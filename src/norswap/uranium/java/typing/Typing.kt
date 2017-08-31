@@ -1,5 +1,4 @@
 package norswap.uranium.java.typing
-import com.sun.org.apache.xpath.internal.operations.Bool
 import norswap.lang.Node
 import norswap.lang.java8.ast.BinaryOp
 import norswap.lang.java8.ast.BinaryShiftRight
@@ -22,7 +21,7 @@ import norswap.lang.java8.ast.UnaryMinus
 import norswap.lang.java8.ast.UnaryOp
 import norswap.lang.java8.ast.UnaryPlus
 import norswap.uranium.Attribute
-import norswap.uranium.Propagator
+import norswap.uranium.Reactor
 import norswap.uranium.Reaction
 import norswap.uranium.java.Context
 import norswap.uranium.java.types.BooleanType
@@ -40,12 +39,12 @@ import norswap.uranium.java.types.Type
 
 fun Context.register_java8_typing_rules()
 {
-    propagator.register_java8_typing_rules(this)
+    reactor.register_java8_typing_rules(this)
 }
 
 // -------------------------------------------------------------------------------------------------
 
-private fun Propagator.register_java8_typing_rules (ctx: Context)
+private fun Reactor.register_java8_typing_rules (ctx: Context)
 {
     add_visitor <Literal>           (ctx::type_literal)
     add_visitor <Negate>            (ctx::type_negation)
@@ -85,7 +84,7 @@ private fun Context.typing
         apply = _apply
     }
 
-    propagator.enqueue(reaction)
+    reactor.enqueue(reaction)
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -98,7 +97,7 @@ private fun Context.checking (_name: String, vararg _consumed: Attribute, _apply
         apply = _apply
     }
 
-    propagator.enqueue(reaction)
+    reactor.enqueue(reaction)
 }
 
 // -------------------------------------------------------------------------------------------------
