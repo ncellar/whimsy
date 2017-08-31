@@ -1,18 +1,8 @@
 package norswap.uranium.java.model
-import norswap.uranium.java.Context
-import norswap.uranium.java.model.source.Scope
-import norswap.uranium.java.types.ClassType
-import norswap.uranium.java.types.RefType
 
 // null for default package
-class Package (val pkg: norswap.lang.java8.ast.Package?): Scope
+class Package (val pkg: norswap.lang.java8.ast.Package?)
 {
-    // ---------------------------------------------------------------------------------------------
-
-    // Not part of the normal static lookup chain, but delegated to by [File].
-    override val outer: Scope?
-        = null
-
     // ---------------------------------------------------------------------------------------------
 
     val name: String
@@ -32,12 +22,10 @@ class Package (val pkg: norswap.lang.java8.ast.Package?): Scope
     /**
      * Maps simple class name to their associated type.
      */
-    val classes = HashMap<String, Klass>()
+    val classes: Map<String, Klass>
+        get() = TODO()
 
-    // ---------------------------------------------------------------------------------------------
-
-    override fun get_type (name: String, ctx: Context): RefType?
-        = classes[name]?.let { ClassType(it) }
+    // NOTE(norswap): The proper way to do this is a classpath + source class scan.
 
     // ---------------------------------------------------------------------------------------------
 }

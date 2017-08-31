@@ -1,5 +1,6 @@
 package norswap.uranium.java.model.source
 import norswap.uranium.java.Context
+import norswap.uranium.java.Resolver.Result.*
 import norswap.uranium.java.model.Package
 import norswap.uranium.java.types.ClassType
 import norswap.uranium.java.types.RefType
@@ -52,13 +53,39 @@ class File (val file: norswap.lang.java8.ast.File, var pkg: Package): Scope
 
     override fun get_type (name: String, ctx: Context): RefType?
     {
-        classes[name]?.let { return ClassType(it) }
+        classes[name]
+            ?.let { return ClassType(it) }
 
         val klass_name = single_imports[name] ?: single_static_imports[name]
 
-        return klass_name
-            ?. let { ctx.resolver.load_class(it) }
-            ?. let { ClassType(it) }
+        if (klass_name != null) {
+            val klass = ctx.resolver.load_class(klass_name)
+            return klass ?. let { ClassType(it) }
+        }
+
+        try_load(pkg.prefix + name, ctx) { return it }
+
+        listOf(wildcard_imports, wildcard_static_imports).forEach {
+            it.forEach {
+                try_load(it + "." + name, ctx) { return it }
+            }
+        }
+
+        return null
+    }
+
+    // ---------------------------------------------------------------------------------------------
+
+    private inline fun try_load (binary_name: String, ctx: Context, ret: (RefType?) -> Unit)
+    {
+        val result = ctx.resolver.load_class_errorless(binary_name)
+
+        if (result is Success)
+            ret(ClassType(result.klass))
+        if (result is Fail) {
+            ctx.report("Could not load class $binary_name from ${result.url}")
+            ret(null)
+        }
     }
 
     // ---------------------------------------------------------------------------------------------

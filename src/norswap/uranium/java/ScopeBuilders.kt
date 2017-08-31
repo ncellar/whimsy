@@ -187,7 +187,6 @@ class ScopesBuilder (private val ctx: Context)
 
         when (skope) {
             is File        -> {
-                              skope.pkg.classes [node.name] = klass
                               skope.classes     [node.name] = klass
             }
             is SourceClass -> skope.klasses     [node.name] = klass

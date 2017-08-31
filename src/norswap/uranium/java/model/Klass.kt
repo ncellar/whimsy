@@ -1,6 +1,5 @@
 package norswap.uranium.java.model
 import norswap.uranium.java.Context
-import norswap.uranium.java.Resolver.Result
 import norswap.utils.multimap.MultiMap
 import norswap.uranium.java.Resolver.Result.*
 
