@@ -174,6 +174,10 @@ class Propagator (val roots: List<Any>)
             val reaction = queue.remove()
             set_target_attrs(reaction.supplied)
             reaction.apply(reaction)
+            reaction.continuations.forEach {
+                it.continued_from = reaction
+                register(it)
+            }
         }
         set_target_attrs(emptyList())
     }

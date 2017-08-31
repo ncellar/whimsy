@@ -28,6 +28,29 @@ class Reaction private constructor()
 
     // ---------------------------------------------------------------------------------------------
 
+    var continued_from: Reaction? = null
+
+    // ---------------------------------------------------------------------------------------------
+
+    private var _continuations: ArrayList<Reaction>? = null
+
+    // ---------------------------------------------------------------------------------------------
+
+    fun continuation (continuation: Reaction)
+    {
+        if (_continuations == null)
+            _continuations = ArrayList()
+
+        _continuations!!.add(continuation)
+    }
+
+    // ---------------------------------------------------------------------------------------------
+
+    val continuations: List<Reaction>
+        get() = _continuations ?: emptyList()
+
+    // ---------------------------------------------------------------------------------------------
+
     private lateinit var satisfied: BooleanArray
 
     // ---------------------------------------------------------------------------------------------
