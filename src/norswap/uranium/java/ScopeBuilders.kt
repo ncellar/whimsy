@@ -291,7 +291,7 @@ class ScopesBuilder (private val ctx: Context)
 
     // ---------------------------------------------------------------------------------------------
 
-    fun visit_lambda (node: norswap.lang.java8.ast.Lambda, start: Boolean)
+    fun visit_lambda (node: ASTLambda, start: Boolean)
     {
         if (!start) {
             scopes.pop()
@@ -317,7 +317,7 @@ class ScopesBuilder (private val ctx: Context)
 
     // ---------------------------------------------------------------------------------------------
 
-    fun visit_block (node: norswap.lang.java8.ast.Block, start: Boolean)
+    fun visit_block (node: ASTBlock, start: Boolean)
     {
         if (!start) {
             scopes.pop()

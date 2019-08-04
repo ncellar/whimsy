@@ -2,7 +2,6 @@ package norswap.uranium
 import norswap.utils.cast
 import norswap.utils.multimap.HashMultiMap
 import norswap.utils.multimap.append
-import norswap.utils.visit_around
 import java.util.ArrayDeque
 
 class Reactor (val roots: List<Any>)
@@ -18,10 +17,10 @@ class Reactor (val roots: List<Any>)
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * A function that enables walking a tree.
-     * The function parameter is applied on all the children of the node passed as first parameter.
+     * A function that enables walking the tree passed as its first parameter, applying
+     * the function supplied as second parameter on all nodes.
      */
-    lateinit var walker: (Any, (Any) -> Unit) -> Unit
+    lateinit var walker: (Any, (Any, Boolean) -> Unit) -> Unit
 
     // ---------------------------------------------------------------------------------------------
 
@@ -105,7 +104,7 @@ class Reactor (val roots: List<Any>)
         initialized = true
 
         for (root in roots)
-            root.visit_around(walker, this::visit)
+            walker(root, this::visit)
     }
 
     // ---------------------------------------------------------------------------------------------

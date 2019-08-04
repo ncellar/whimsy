@@ -112,7 +112,7 @@ fun Scope.resolve_qualified_type (name: List<String>, ctx: Context): Klass?
  * Reports an error if either a class isn't found, or if one is found but the class information
  * can't be loaded.
  */
-private fun Scope.find_first_class (name: List<String>, ctx: Context, size: IntRef): Klass?
+fun Scope.find_first_class (name: List<String>, ctx: Context, size: IntRef): Klass?
 {
     // simple type?
     resolve_simple_type(name[0], ctx)?.let {

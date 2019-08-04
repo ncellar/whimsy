@@ -12,6 +12,7 @@ import norswap.lang.java8.ast.Literal
 import norswap.lang.java8.ast.Lower
 import norswap.lang.java8.ast.LowerEqual
 import norswap.lang.java8.ast.Negate
+import norswap.lang.java8.ast.Null
 import norswap.lang.java8.ast.Product
 import norswap.lang.java8.ast.Remainder
 import norswap.lang.java8.ast.ShiftLeft
@@ -31,6 +32,7 @@ import norswap.uranium.java.types.FloatType
 import norswap.uranium.java.types.IntType
 import norswap.uranium.java.types.IntegralType
 import norswap.uranium.java.types.LongType
+import norswap.uranium.java.types.NullType
 import norswap.uranium.java.types.NumericType
 import norswap.uranium.java.types.RefType
 import norswap.uranium.java.types.Type
@@ -108,6 +110,7 @@ fun Context.type_literal (node: Literal, start: Boolean)
     typing (node, "Literal")
     {
         node.type = when (node.value) {
+            Null        -> NullType
             is String   -> StringType
             is Int      -> IntType
             is Long     -> LongType
@@ -115,7 +118,7 @@ fun Context.type_literal (node: Literal, start: Boolean)
             is Double   -> DoubleType
             is Char     -> CharType
             is Boolean  -> BooleanType
-            else        -> throw Error("unknown literal type")
+            else        -> throw Error("unknown literal type for: " + node.value)
         }
     }
 }

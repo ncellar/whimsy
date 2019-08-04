@@ -73,7 +73,10 @@ class BytecodeClass (val node: ClassNode): Klass()
      * The binary name of the superclass.
      */
     val superclass: String
-        = internal_to_binary_name(node.superName)
+        = if (node.superName == null)
+            "java.lang.Object" // tie the loop for Object
+        else
+            internal_to_binary_name(node.superName)
 
     // ---------------------------------------------------------------------------------------------
 

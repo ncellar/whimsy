@@ -8,6 +8,7 @@ import java.lang.invoke.LambdaMetafactory
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.reflect.Method
+import java.lang.reflect.ParameterizedType
 
 // ---------------------------------------------------------------------------------------------
 
@@ -117,8 +118,6 @@ class JavaWalker: (Node, (Node) -> Unit) -> Unit
     {
         val klass = node.javaClass
         val data = cdatas.getOrPut(klass) { ClassData(lookup, klass) }
-
-        if (node is Array<*>) println(node.str)
 
         data.directs.forEach {
             it.apply(node)?.let { f(it.cast()) }
