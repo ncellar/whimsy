@@ -50,6 +50,9 @@ writing custom combinators.
   
 - [parsimonious]: A Python parser combinator library.
 
+- [TatSu]: A python parser combinator library, with support for left-recursion
+  and the cut operator.
+
 - [PetitParser]: A Smalltalk combinator library. Java and Dart versions [also available].
 
   [also available]: https://github.com/petitparser
@@ -116,6 +119,7 @@ writing custom combinators.
 [parsec]: https://github.com/aslatter/parsec
 [attoparsec]: https://github.com/bos/attoparsec
 [parsimonious]: https://github.com/erikrose/parsimonious
+[TatSu]: https://github.com/neogeny/tatsu
 [PetitParser]: http://scg.unibe.ch/research/helvetia/petitparser
 [gll-combinators]: https://github.com/djspiewak/gll-combinators
 [packrattle]: https://github.com/robey/packrattle

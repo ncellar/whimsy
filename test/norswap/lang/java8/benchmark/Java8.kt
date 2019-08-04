@@ -1,6 +1,8 @@
 package norswap.lang.java8.benchmark
 import norswap.autumn.CaughtException
 import norswap.autumn.UncaughtException
+import norswap.lang.java8.Grammar2
+import norswap.lang.java8.GraphGrammar
 //import norswap.lang.java8.Grammar2
 //import norswap.lang.java8.GraphGrammar
 import norswap.lang.java8.Java8Grammar
@@ -23,9 +25,9 @@ fun main (args: Array<String>)
 
     val corpus =
         if (os == "Mac OS X")
-            "/Users/nilaurent/Documents/bench" // 14.9
+            "/Users/nilaurent/Documents/bench" // (Spring 4.3.2) (35M)
         else
-            "D:/spring" // 21.8
+            "D:/bench" // (Spring 4.3.2) (35M)
 
     val paths = glob("**/*.java", Paths.get(corpus))
 
@@ -58,6 +60,12 @@ fun main (args: Array<String>)
             g.reset()
         }
     }
+
+    // Some results:
+    // OSX: 15.7s (regular)                     (Spring 4.3.2) (35M)
+    // OSX: 13.7 (grammar2)                     (Spring 4.3.2) (35M)
+    // OSX: 17.4 (graph)                        (Spring 4.3.2) (35M)
+    // ... this last one feels wrong - there should be megamorphic call sites
 
     println("Code parsed in: " + Duration.ofNanos(time))
 }

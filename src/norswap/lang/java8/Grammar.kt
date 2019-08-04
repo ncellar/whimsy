@@ -118,10 +118,9 @@ class Java8Grammar : TokenGrammar()
     val le = "<=".keyword
     val sl = "<<".keyword
     val sle = "<<=".keyword
-    // todo this really a thing?
-    fun sr() = +">>" // to avoid ambiguity with gt
+    fun sr() = +">>" // to avoid ambiguity with gt (e.g. List<List<String>>)
     val sre = ">>=".keyword
-    fun bsr() = +">>>" // to avoid ambiguity with gt
+    fun bsr() = +">>>" // to avoid ambiguity with gt (e.g. List<List<String>>)
     val bsre = ">>>=".keyword
     val lsbra = "[".keyword
     val rsbra = "]".keyword

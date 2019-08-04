@@ -26,7 +26,6 @@ class Leftrec: EmptyGrammarFixture()
         success("abbb")
         success("aaabbb")
         failure_expect("b", 0, "a")
-
     }
 
     // ---------------------------------------------------------------------------------------------
